@@ -9,8 +9,8 @@ interface SocketWithUser extends Socket {
   userId: string;
 }
 
-//store online users in memory: userId => socketId
-export const onlineUsers: Map<string, string> = new Map();
+//store online users in memory: userId => set of socketIds
+export const onlineUsers: Map<string, Set<string>> = new Map();
 
 export const initializeSocket = (httpServer: httpServer) => {
   const allowedOrigins = [
@@ -55,22 +55,40 @@ export const initializeSocket = (httpServer: httpServer) => {
     socket.emit("getOnlineUsers", Array.from(onlineUsers.keys()));
 
     //storing the current user in onlineUsers map
-    onlineUsers.set(userId, socket.id);
+    const isFirstConnection = !onlineUsers.has(userId);
+    if (isFirstConnection) {
+      onlineUsers.set(userId, new Set());
+    }
+    onlineUsers.get(userId)!.add(socket.id);
 
-    //showing current user as online to already online users
-    socket.broadcast.emit("userOnline", { userId });
+    //showing current user as online to already online users (only on first connection)
+    if (isFirstConnection) {
+      socket.broadcast.emit("userOnline", { userId });
+    }
 
     // user room for messages
     socket.join(`user:${userId}`);
 
     // user join to a private room for chat
     //listening to the event that coming from the frontend
-    socket.on("join-chat", (chatId: string) => {
-      socket.join(`chat:${chatId}`);
+    socket.on("join-chat", async (chatId: string) => {
+      try {
+        const chat = await Chat.findOne({
+          _id: chatId,
+          participants: userId,
+        });
+        if (!chat) {
+          socket.emit("socket-error", { message: "Chat not found!" });
+          return;
+        }
+        socket.join(`chat:${chatId}`);
+      } catch (error) {
+        socket.emit("socket-error", { message: "Failed to join chat!" });
+      }
     });
 
     // user leave from a chat
-    socket.on("join-chat", (chatId: string) => {
+    socket.on("leave-chat", (chatId: string) => {
       socket.leave(`chat:${chatId}`);
     });
 
@@ -121,11 +139,16 @@ export const initializeSocket = (httpServer: httpServer) => {
     //handling typing event for the chat
 
     //handling disconnection
-    socket.on("disconnect" ,() => {
-        onlineUsers.delete(userId);
-        //notifying other users that the user is offline
-        socket.broadcast.emit('user-offline', {userId})
-    })
+    socket.on("disconnect", () => {
+      const sockets = onlineUsers.get(userId);
+      if (sockets) {
+        sockets.delete(socket.id);
+        if (sockets.size === 0) {
+          onlineUsers.delete(userId);
+          socket.broadcast.emit("user-offline", { userId });
+        }
+      }
+    });
   });
 
   //returning the instance of the socket server
