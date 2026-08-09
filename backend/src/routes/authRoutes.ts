@@ -5,7 +5,7 @@ import { getMe, authCallback } from "../controllers/authController";
 const router = Router();
 
 router.get("/me", protectRoute, getMe)
-router.get("/callback", protectRoute, authCallback)
+router.get("/callback", authCallback)
 
 
 export default router;

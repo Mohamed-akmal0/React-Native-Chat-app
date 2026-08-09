@@ -27,7 +27,7 @@ export const authCallback = async (req: Request, res: Response, next: NextFuncti
         clerkId,
         name: clerkUser.firstName
           ? `${clerkUser.firstName} ${clerkUser.lastName}`
-          : clerkUser.emailAddresses[0]?.emailAddress.split("@")[0],
+          : clerkUser.emailAddresses[0]?.emailAddress?.split("@")[0],
           email: clerkUser.emailAddresses[0]?.emailAddress,
           avatar: clerkUser.imageUrl
       });
