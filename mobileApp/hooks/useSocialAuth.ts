@@ -12,6 +12,13 @@ export const useSocialAuth = () => {
       const { createdSessionId, setActive } = await startSSOFlow({ strategy });
       if (createdSessionId && setActive) {
         await setActive({ session: createdSessionId });
+      }else{
+        const provider = strategy === "oauth_google" ? "Google" : "Apple";
+        Alert.alert(
+          "Error",
+          `Failed to sign in with ${provider}. Please try again.`,
+        );
+        setLoading(null);
       }
     } catch (error) {
       console.log("error in social auth", error);

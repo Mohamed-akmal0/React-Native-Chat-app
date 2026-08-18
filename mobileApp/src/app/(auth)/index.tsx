@@ -8,6 +8,8 @@ const { width, height } = useWindowDimensions();
 
 const LoginScreen = () => {
   const { loading, handleSocialAuth } = useSocialAuth();
+  const isLoading  = loading !== null;
+
   return (
     <View className="flex-1  bg-surface-dark">
       <View></View>
@@ -40,7 +42,7 @@ const LoginScreen = () => {
           <View className="flex-row gap-4 mt-10">
             <Pressable
               className="flex-1 flex-row items-center justify-center gap-2 bg-white/95 py-4 rounded-2xl active:scale-[0.98]"
-              disabled={loading === "oauth_google"}
+              disabled={isLoading}
               onPress={() => handleSocialAuth("oauth_google")}
             >
               {loading === "oauth_google" ? (
@@ -58,7 +60,7 @@ const LoginScreen = () => {
             </Pressable>
             <Pressable
               className="flex-1 flex-row items-center justify-center gap-2 bg-white/10 py-4 rounded-2xl active:scale-[0.98]"
-              disabled={loading === "oauth_apple"}
+              disabled={isLoading}
               onPress={() => handleSocialAuth("oauth_apple")}
             >
               {loading === "oauth_apple" ? (
