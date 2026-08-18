@@ -4,9 +4,10 @@ import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { useSocialAuth } from "../../../hooks/useSocialAuth";
 
-const { width, height } = useWindowDimensions();
 
 const LoginScreen = () => {
+  const { width, height } = useWindowDimensions();
+  
   const { loading, handleSocialAuth } = useSocialAuth();
   const isLoading  = loading !== null;
 
@@ -75,7 +76,6 @@ const LoginScreen = () => {
           </View>
         </View>
       </SafeAreaView>
-      <Text>LoginScreen</Text>
     </View>
   );
 };
