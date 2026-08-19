@@ -1,9 +1,12 @@
 import {Text, ScrollView, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@clerk/expo";
+import { useUserProfile } from "../../../hooks/useAuthentication";
 
 const profile = () => {
   const {signOut} = useAuth();
+  const {data: userData} = useUserProfile();
+  // console.log('user data', userData);
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <ScrollView >
