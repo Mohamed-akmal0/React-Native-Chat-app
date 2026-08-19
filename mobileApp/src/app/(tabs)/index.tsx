@@ -1,6 +1,7 @@
-import { ScrollView, Text } from "react-native";
+import { ScrollView, Text, Button } from "react-native";
 import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as Sentry from "@sentry/react-native"
 
 const ChatsScreen = () => {
   return (
@@ -8,6 +9,7 @@ const ChatsScreen = () => {
       {/* we can add contentInsetAdjustmentBehavior="automatic" to resovle the safe area issue but it will not work on android. */}
       <ScrollView contentInsetAdjustmentBehavior="automatic">
         <Text className="text-white">ChatsScreen</Text>
+        <Button title='Try!' onPress={ () => { Sentry.captureException(new Error('First error')) }}/>
       </ScrollView>
     </SafeAreaView>
   );
