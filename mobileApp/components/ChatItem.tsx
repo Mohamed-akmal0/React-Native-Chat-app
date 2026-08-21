@@ -12,7 +12,7 @@ export const ChatItem = ({
 }) => {
   const participant = chat?.otherParticipant;
   const lastMessage = chat?.lastMessage;
-  const lastMessageTime = chat?.createdAt;
+  const lastMessageTime = chat?.lastMessageAt;
 
   const isOnline = true;
   const istyping = false;

@@ -17,14 +17,23 @@ import { useGetOrCreateChat } from "../../../hooks/useChat";
 
 const NewChatScreen = () => {
   const router = useRouter();
-// local state
-  const [searchQuery, setSearchQuery] = useState("");
   //react query
   const { data: usersList, isLoading } = useUsers();
   const { mutate: getOrCreateChat, isPending: isCreatingChat } =
     useGetOrCreateChat();
 
-  //functions
+  const filteredUsers = usersList?.filter((user) => {
+    const query = searchQuery.trim().toLowerCase();
+    return (
+      !query ||
+      user.name.toLowerCase().includes(query) ||
+      user.email.toLowerCase().includes(query)
+    );
+  });
+
+  // local state
+  const [searchQuery, setSearchQuery] = useState("");
+
   const handleUserClick = (userDetails: User) => {
     getOrCreateChat(userDetails._id, {
       onSuccess: (chat) => {
@@ -89,7 +98,7 @@ const NewChatScreen = () => {
               <View className="flex-1 items-center justify-center">
                 <ActivityIndicator size="large" color="#F4A261" />
               </View>
-            ) : !usersList || usersList.length === 0 ? (
+            ) : !filteredUsers || filteredUsers.length === 0 ? (
               <View className="flex-1 items-center justify-center px-5">
                 <Ionicons name="person-outline" size={64} color="#6B6B70" />
                 <Text className="text-muted-foreground text-lg mt-4">
@@ -108,7 +117,7 @@ const NewChatScreen = () => {
                 <Text className="text-muted-foreground text-xs mb-3">
                   USERS
                 </Text>
-                {usersList.map((user) => (
+                {filteredUsers.map((user) => (
                   <UsersList
                     key={user._id}
                     user={user}
