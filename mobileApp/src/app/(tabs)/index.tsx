@@ -26,9 +26,9 @@ const ChatsScreen = () => {
       pathname: "/chat/[id]",
       params: {
         id: item._id,
-        participantId: item.participant._id,
-        name: item.participant.name,
-        avatar: item.participant.avatar,
+        participantId: item.otherParticipant._id,
+        name: item.otherParticipant.name,
+        avatar: item.otherParticipant.avatar,
       },
     });
   };
@@ -67,7 +67,7 @@ const ChatsScreen = () => {
       <FlatList
         data={userChatList}
         keyExtractor={(item) => item._id}
-        renderItem={(item: Chat) => (
+        renderItem={({ item }) => (
           <ChatItem chat={item} onPress={() => handleChatPress(item)} />
         )}
         ListHeaderComponent={<ChatHeader />}
@@ -84,7 +84,7 @@ const ChatsScreen = () => {
               title="No chat found!"
               subtitle="Start new chat!"
               buttonLabel="New chat"
-              onPressButton={() => {}}
+              onPressButton={() => {router.push("/newChat")}}
             />
           )
         }

@@ -58,6 +58,10 @@ const RootLayout = () => {
             name="(tabs)"
             options={{ headerShown: false, animation: "fade" }}
           />
+          <Stack.Screen
+            name="newChat"
+            options={{ headerShown: false, animation: "fade", presentation: "modal"}}
+          />
         </Stack>
       </QueryClientProvider>
     </ClerkProvider>

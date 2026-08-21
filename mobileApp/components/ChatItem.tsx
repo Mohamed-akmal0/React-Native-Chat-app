@@ -1,5 +1,5 @@
 import { View, Text, Pressable } from "react-native";
-import { Chat } from "../types";
+import { Chat, User } from "../types";
 import { Image } from "expo-image";
 import { formatDistanceToNow } from "date-fns";
 
@@ -10,9 +10,9 @@ export const ChatItem = ({
   chat: Chat;
   onPress: () => void;
 }) => {
-  const participant = chat.participant;
-  const lastMessage = chat.lastMessage;
-  const lastMessageTime = chat.createdAt;
+  const participant = chat?.otherParticipant;
+  const lastMessage = chat?.lastMessage;
+  const lastMessageTime = chat?.lastMessageAt;
 
   const isOnline = true;
   const istyping = false;
@@ -25,7 +25,7 @@ export const ChatItem = ({
     >
       <View className="relatvie">
         <Image
-          source={{ uri: participant.avatar }}
+          source={{ uri: participant?.avatar }}
           style={{ width: 56, height: 56, borderRadius: 99 }}
         />
         <View className="absolute bottom-0 right-0 size-4 bg-green-500 rounded-full border-[3px border-surface" />
@@ -38,7 +38,7 @@ export const ChatItem = ({
           <Text
             className={` text-base font-medium ${hasUnread ? "text-primary" : "text-foreground"}`}
           >
-            {participant.name}
+            {participant?.name}
           </Text>
           <View className="flex-row items-center gap-2">
             {hasUnread && (
