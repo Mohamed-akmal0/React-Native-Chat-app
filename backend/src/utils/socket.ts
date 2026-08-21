@@ -137,6 +137,28 @@ export const initializeSocket = (httpServer: httpServer) => {
     );
 
     //handling typing event for the chat
+    socket.on("typing", async(data: {chatId: string, isTyping:boolean}) => {
+      const typingPayload = {
+        userId,
+        chatId: data.chatId,
+        isTyping: data.isTyping
+      }
+      //emit to chat room (for users inside the chat)
+      socket.to(`chat:${data.chatId}`).emit("typing", typingPayload)
+
+      //also emit to other users personal rchat (for chat list view)
+      try {
+        const chat = await Chat.findById({_id: data.chatId});
+        if(chat){
+          const otherParticipantId = chat.participants.find((p: any) => p.toString() !== userId);
+          if(otherParticipantId){
+            socket.to(`user:${otherParticipantId}`).emit("typing", typingPayload)
+          }
+        }
+      } catch (error) {
+        
+      }
+    })
 
     //handling disconnection
     socket.on("disconnect", () => {
