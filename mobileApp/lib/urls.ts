@@ -4,5 +4,10 @@ export const authUrls = {
 };
 
 export const chats = {
-    chats: "/chats"
-}
+  chats: "/chats",
+  getOrCreateChats: (participantId: string) => `/chats/with/${participantId}`,
+};
+
+export const users = {
+  users: "/users",
+};

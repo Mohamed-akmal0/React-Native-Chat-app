@@ -1,6 +1,6 @@
 import type { AxiosRequestConfig, AxiosResponse } from "axios";
-import { authUrls, chats } from "./urls";
-import { Chat } from "../types";
+import { authUrls, chats, users } from "./urls";
+import { Chat, User } from "../types";
 
 type ApiWithAuth = <T = unknown>(
   config: AxiosRequestConfig,
@@ -34,10 +34,42 @@ export const getUserProfile = async (apiWithAuth: ApiWithAuth) => {
 
 export const getUserChatList = async (apiWithAuth: ApiWithAuth) => {
   try {
-    const { data } = await apiWithAuth<Chat[]>({ method: "GET", url: chats.chats });
+    const { data } = await apiWithAuth<Chat[]>({
+      method: "GET",
+      url: chats.chats,
+    });
     return data;
   } catch (error) {
     console.log("err in get chat api", error);
+    throw error;
+  }
+};
+
+export const getOrCreateUsersChat = async <Promise>(
+  apiWithAuth: ApiWithAuth,
+  participantId: string,
+) => {
+  try {
+    const { data } = await apiWithAuth<Chat>({
+      method: "POST",
+      url: chats.getOrCreateChats(participantId),
+    });
+    return data;
+  } catch (error) {
+    console.log("err in get or create chat api", error);
+    throw error;
+  }
+};
+
+export const getAllUsers = async (apiWithAuth: ApiWithAuth) => {
+  try {
+    const { data } = await apiWithAuth<User[]>({
+      method: "GET",
+      url: users.users,
+    });
+    return data;
+  } catch (error) {
+    console.log("err in get users api", error);
     throw error;
   }
 };

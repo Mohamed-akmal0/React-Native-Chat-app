@@ -41,7 +41,7 @@ const ProfileTab = () => {
       contentInsetAdjustmentBehavior="automatic"
       showsVerticalScrollIndicator={false}
       // indicatorStyle="white"
-      contentContainerStyle={{ paddingBottom: 40 }}
+      contentContainerStyle={{ paddingBottom: 40, marginTop: 20}}
       bounces={false}
     >
       {/* HEADER  */}
