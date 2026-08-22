@@ -101,7 +101,7 @@ export const initializeSocket = (httpServer: httpServer) => {
           //checking chat is existed or not
           const chat = await Chat.findOne({
             _id: chatId,
-            paricipants: userId,
+            participants: userId,
           });
         
           if (!chat) {
