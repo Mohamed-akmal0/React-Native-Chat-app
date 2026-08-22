@@ -213,7 +213,7 @@ export const useSocketStore = create<socketState>((set, get) => ({
 
     //update the UI with temp message immediatly
     queryClient.setQueryData<Message[]>(["messages", chatId], (old) => {
-      if (!old) return tempMessage;
+      if (!old) return [tempMessage];
       return [...old, tempMessage];
     });
 
