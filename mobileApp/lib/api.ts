@@ -73,3 +73,32 @@ export const getAllUsers = async (apiWithAuth: ApiWithAuth) => {
     throw error;
   }
 };
+
+export const getCurrentUserDetails = async (apiWithAuth: ApiWithAuth) => {
+  try {
+    const { data } = await apiWithAuth<User>({
+      method: "GET",
+      url: users.currentUser,
+    });
+    return data;
+  } catch (error) {
+    console.log("err in get current user api", error);
+    throw error;
+  }
+};
+
+export const getUserMessages = async (
+  apiWithAuth: ApiWithAuth,
+  chatId: string,
+) => {
+  try {
+    const { data } = await apiWithAuth({
+      method: "GET",
+      url: chats.getMessages(chatId),
+    });
+    return data;
+  } catch (error) {
+    console.log("err in get message api", error);
+    throw error;
+  }
+};
