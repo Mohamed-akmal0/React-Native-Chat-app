@@ -8,7 +8,6 @@ export const useAuthLogin = () => {
   return useMutation({
     mutationFn: () => loginApi(apiWithAuth),
     onSuccess: (data) => {
-      console.log("😀 data in login api", data);
       Sentry.logger.info("user profile details", {
         userData: data,
       });

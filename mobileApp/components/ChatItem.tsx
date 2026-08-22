@@ -2,6 +2,7 @@ import { View, Text, Pressable } from "react-native";
 import { Chat, User } from "../types";
 import { Image } from "expo-image";
 import { formatDistanceToNow } from "date-fns";
+import { useSocketStore } from "../lib/socketStore";
 
 export const ChatItem = ({
   chat,
@@ -14,9 +15,11 @@ export const ChatItem = ({
   const lastMessage = chat?.lastMessage;
   const lastMessageTime = chat?.lastMessageAt;
 
-  const isOnline = true;
-  const istyping = false;
-  const hasUnread = false;
+  const { onlineUsers, typingUsers, unreadChats } = useSocketStore();
+
+  const isOnline = onlineUsers.has(participant._id);
+  const istyping = typingUsers.get(chat._id) === participant._id;
+  const hasUnread = unreadChats.has(chat._id);
 
   return (
     <Pressable
@@ -28,7 +31,9 @@ export const ChatItem = ({
           source={{ uri: participant?.avatar }}
           style={{ width: 56, height: 56, borderRadius: 99 }}
         />
-        <View className="absolute bottom-0 right-0 size-4 bg-green-500 rounded-full border-[3px border-surface" />
+        {isOnline ? (
+          <View className="absolute bottom-0 right-0 size-4 bg-green-500 rounded-full border-[3px border-surface" />
+        ) : null}
       </View>
 
       {/* chat info */}
@@ -44,7 +49,7 @@ export const ChatItem = ({
             {hasUnread && (
               <View className="1-2.5 h-2.5 bg-primary rounded-full" />
             )}
-            <Text className="text-xs text-subtle-foregrond">
+            <Text className="text-xs text-subtle-foreground">
               {lastMessageTime
                 ? formatDistanceToNow(new Date(lastMessageTime), {
                     addSuffix: false,

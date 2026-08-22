@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { getAllUsers } from "../lib/api";
 import { useApi } from "../lib/axios";
+import { getAllUsers, getCurrentUserDetails } from "../lib/api";
 
 export const useUsers = () => {
   const { apiWithAuth } = useApi();
@@ -9,3 +9,11 @@ export const useUsers = () => {
     queryFn: () => getAllUsers(apiWithAuth),
   });
 };
+
+export const useCurrentUser = () => {
+  const { apiWithAuth } = useApi();
+  return useQuery({
+    queryKey: ["current-user"],
+    queryFn: () => getCurrentUserDetails(apiWithAuth),
+  });
+}
