@@ -12,21 +12,23 @@ export const AuthSync = () => {
 
   const connect = useSocketStore((s) => s.connect);
   const disconnect = useSocketStore((s) => s.disconnect);
+  
   useEffect(() => {
     if (!isSignedIn) {
       disconnect();
       return;
     }
+  
     const start = async () => {
       const token = await getToken();
       if (token) connect(token, queryClient);
     };
     start();
-
-    return () => {
-      disconnect()
-    }
-  }, [isSignedIn, getToken, connect, disconnect]);
+  }, [isSignedIn]); // not getToken
+  
+  useEffect(() => {
+    return () => disconnect();
+  }, []);
 
   useEffect(() => {
     if (isSignedIn && user && !hasSyncked.current) {

@@ -39,7 +39,7 @@ export const useSocketStore = create<socketState>((set, get) => ({
   connect: (token, queryClient) => {
     const existingSocket = get().socket;
 
-    if (existingSocket?.connect) return;
+    if (existingSocket?.connected) return;
 
     if (existingSocket) existingSocket.disconnect();
 
@@ -57,8 +57,11 @@ export const useSocketStore = create<socketState>((set, get) => ({
 
     //("") these are event names that we derived in the backend
     // whenever we emit anything from the backend, we have receive it like (userIds)
-    socket.on("getOnlineUsers", ({ userIds }: { userIds: string[] }) => {
-      console.log("Got online users", userIds);
+    // socket.on("getOnlineUsers", ({ userIds }: { userIds: string[] }) => {
+    //   console.log("Got online users", userIds);
+    //   set({ onlineUsers: new Set(userIds) });
+    // });
+    socket.on("getOnlineUsers", (userIds: string[]) => {
       set({ onlineUsers: new Set(userIds) });
     });
 

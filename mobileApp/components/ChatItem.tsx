@@ -15,11 +15,11 @@ export const ChatItem = ({
   const lastMessage = chat?.lastMessage;
   const lastMessageTime = chat?.lastMessageAt;
 
-  const { onlineUsers } = useSocketStore();
+  const { onlineUsers, typingUsers, unreadChats } = useSocketStore();
 
-  const isOnline = false;
-  const istyping = false;
-  const hasUnread = false;
+  const isOnline = onlineUsers.has(participant._id);
+  const istyping = typingUsers.get(chat._id) === participant._id;
+  const hasUnread = unreadChats.has(chat._id);
 
   return (
     <Pressable
