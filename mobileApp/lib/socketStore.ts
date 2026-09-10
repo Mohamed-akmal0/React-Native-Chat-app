@@ -65,9 +65,10 @@ export const useSocketStore = create<socketState>((set, get) => ({
       set({ onlineUsers: new Set(userIds) });
     });
 
-    socket.on("userOnline", ({ currentUserId }: { currentUserId: string }) => {
+    socket.on("userOnline", ({ userId }: { userId: string }) => {
+      if (!userId) return;
       set((state) => ({
-        onlineUsers: new Set([...state.onlineUsers, currentUserId]),
+        onlineUsers: new Set([...state.onlineUsers, userId]),
       }));
     });
 
@@ -85,10 +86,16 @@ export const useSocketStore = create<socketState>((set, get) => ({
     });
 
     socket.on("new-message", (message: Message) => {
-      const senderId = (message.senderId as MessageSender)._id;
+      const chatId = String(message.chatId ?? "");
+      if (!chatId) return;
+
+      const senderId =
+        typeof message.senderId === "string"
+          ? message.senderId
+          : message.senderId._id;
       const { currentChatId } = get();
       // add message to the chat's message list, replacing optimistic (temp) messages
-      queryClient.setQueryData<Message[]>(["messages", message.chat], (old) => {
+      queryClient.setQueryData<Message[]>(["messages", chatId], (old) => {
         if (!old) return [message];
         // remove any optimistic messages (temp IDs) and add the real one
         const filtered = old.filter((m) => !m._id.startsWith("temp-"));
@@ -97,8 +104,9 @@ export const useSocketStore = create<socketState>((set, get) => ({
       });
       // Update chat's lastMessage directly for instant UI update
       queryClient.setQueryData<Chat[]>(["chats"], (oldChats) => {
-        return oldChats?.map((chat) => {
-          if (chat._id === message.chat) {
+        if (!oldChats) return oldChats;
+        const updated = oldChats.map((chat) => {
+          if (chat._id === chatId) {
             return {
               ...chat,
               lastMessage: {
@@ -112,15 +120,21 @@ export const useSocketStore = create<socketState>((set, get) => ({
           }
           return chat;
         });
+        // keep the most recently messaged chat at the top
+        return updated.sort((a, b) => {
+          if (a._id === chatId) return -1;
+          if (b._id === chatId) return 1;
+          return 0;
+        });
       });
 
       // mark as unread if not currently viewing this chat and message is from other user
-      if (currentChatId !== message.chat) {
+      if (currentChatId !== chatId) {
         const chats = queryClient.getQueryData<Chat[]>(["chats"]);
-        const chat = chats?.find((c) => c._id === message.chat);
+        const chat = chats?.find((c) => c._id === chatId);
         if (chat?.otherParticipant && senderId === chat.otherParticipant._id) {
           set((state) => ({
-            unreadChats: new Set([...state.unreadChats, message.chat]),
+            unreadChats: new Set([...state.unreadChats, chatId]),
           }));
         }
       }
@@ -128,7 +142,7 @@ export const useSocketStore = create<socketState>((set, get) => ({
       // clear typing indicator when message received
       set((state) => {
         const typingUsers = new Map(state.typingUsers);
-        typingUsers.delete(message.chat);
+        typingUsers.delete(chatId);
         return { typingUsers: typingUsers };
       });
     });
@@ -140,9 +154,9 @@ export const useSocketStore = create<socketState>((set, get) => ({
         userId,
         isTyping,
       }: {
-        userId: String;
+        userId: string;
         chatId: string;
-        isTyping: Boolean;
+        isTyping: boolean;
       }) => {
         set((state) => {
           const typingUsers = new Map(state.typingUsers);
@@ -177,7 +191,7 @@ export const useSocketStore = create<socketState>((set, get) => ({
     set((state) => {
       const unreadChats = new Set(state.unreadChats);
       unreadChats.delete(chatId);
-      return { unreadChats: unreadChats };
+      return { unreadChats, currentChatId: chatId };
     });
 
     if (socket?.connected) {
@@ -204,7 +218,7 @@ export const useSocketStore = create<socketState>((set, get) => ({
 
     const tempMessage: Message = {
       _id: tempId,
-      chat: chatId,
+      chatId,
       senderId: currentUser,
       text,
       createdAt: new Date().toISOString(),
@@ -237,7 +251,7 @@ export const useSocketStore = create<socketState>((set, get) => ({
   sendTyping: (chatId, isTyping) => {
     const socket = get().socket;
     if (socket?.connected) {
-      socket.emit("typing", chatId, isTyping);
+      socket.emit("typing", { chatId, isTyping });
     }
   },
 }));
