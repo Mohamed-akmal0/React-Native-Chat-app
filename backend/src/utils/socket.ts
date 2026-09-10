@@ -122,12 +122,14 @@ export const initializeSocket = (httpServer: httpServer) => {
 
           await message.populate("senderId", "name email avatar");
 
+          const payload = message.toJSON();
+
           //emit to chat room for users inside the chat
-          io.to(`chat:${chatId}`).emit("new-message", message);
+          io.to(`chat:${chatId}`).emit("new-message", payload);
 
           //emitting the same message to pariticpant message list
-          for(const participant of chat.participants){
-            io.to(`user:${participant}`).emit("new-message", message);
+          for (const participant of chat.participants) {
+            io.to(`user:${participant.toString()}`).emit("new-message", payload);
           }
 
         } catch (error) {
@@ -137,18 +139,19 @@ export const initializeSocket = (httpServer: httpServer) => {
     );
 
     //handling typing event for the chat
-    socket.on("typing", async(data: {chatId: string, isTyping:boolean}) => {
+    socket.on("typing", async (data: { chatId: string; isTyping: boolean }) => {
+      if (!data?.chatId) return;
       const typingPayload = {
         userId,
         chatId: data.chatId,
-        isTyping: data.isTyping
-      }
+        isTyping: data.isTyping,
+      };
       //emit to chat room (for users inside the chat)
       socket.to(`chat:${data.chatId}`).emit("typing", typingPayload)
 
       //also emit to other users personal rchat (for chat list view)
       try {
-        const chat = await Chat.findById({_id: data.chatId});
+        const chat = await Chat.findById(data.chatId);
         if(chat){
           const otherParticipantId = chat.participants.find((p: any) => p.toString() !== userId);
           if(otherParticipantId){
@@ -167,7 +170,7 @@ export const initializeSocket = (httpServer: httpServer) => {
         sockets.delete(socket.id);
         if (sockets.size === 0) {
           onlineUsers.delete(userId);
-          socket.broadcast.emit("user-offline", { userId });
+          socket.broadcast.emit("userOffline", { userId });
         }
       }
     });

@@ -14,7 +14,7 @@ export interface User {
   
   export interface Message {
     _id: string;
-    chat: string;
+    chatId: string;
     senderId: MessageSender | string;
     text: string;
     createdAt: string;

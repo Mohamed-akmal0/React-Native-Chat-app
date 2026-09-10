@@ -8,5 +8,7 @@ export const useMessages = (chatId: string) => {
     queryKey: ["messages", chatId],
     queryFn: () => getUserMessages(apiWithAuth, chatId),
     enabled: !!chatId,
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 };
