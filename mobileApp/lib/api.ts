@@ -6,11 +6,15 @@ type ApiWithAuth = <T = unknown>(
   config: AxiosRequestConfig,
 ) => Promise<AxiosResponse<T>>;
 
-export const loginApi = async (apiWithAuth: ApiWithAuth) => {
+const unwrapUser = (data: User | { user: User }) =>
+  data && "user" in data && data.user ? data.user : (data as User);
+
+export const loginApi = async (apiWithAuth: ApiWithAuth, publicKey: string) => {
   try {
     const { data } = await apiWithAuth({
       method: "POST",
       url: authUrls.login,
+      data: {publicKey}
     });
     return data;
   } catch (error) {
@@ -21,11 +25,11 @@ export const loginApi = async (apiWithAuth: ApiWithAuth) => {
 
 export const getUserProfile = async (apiWithAuth: ApiWithAuth) => {
   try {
-    const { data } = await apiWithAuth({
+    const { data } = await apiWithAuth<User | { user: User }>({
       method: "GET",
       url: authUrls.profile,
     });
-    return data;
+    return unwrapUser(data);
   } catch (error) {
     console.log("err in user profile api", error);
     throw error;
@@ -76,11 +80,11 @@ export const getAllUsers = async (apiWithAuth: ApiWithAuth) => {
 
 export const getCurrentUserDetails = async (apiWithAuth: ApiWithAuth) => {
   try {
-    const { data } = await apiWithAuth<User>({
+    const { data } = await apiWithAuth<User | { user: User }>({
       method: "GET",
       url: users.currentUser,
     });
-    return data;
+    return unwrapUser(data);
   } catch (error) {
     console.log("err in get current user api", error);
     throw error;

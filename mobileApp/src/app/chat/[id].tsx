@@ -7,7 +7,6 @@ import { useMessages } from "../../../hooks/useMessages";
 import { useSocketStore } from "../../../lib/socketStore";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { MessageSender } from "../../../types";
 import EmptyUI from "../../../components/EmptyUI"
 import MessageBubble from "../../../components/MessageBubble"
 
@@ -169,8 +168,13 @@ const ChatDetailScreen = () => {
               }}
             >
               {messageData?.map((message: any) => {
-                const senderId = (message.senderId as MessageSender)._id;
-                const isFromMe = currentUserData ? senderId === currentUserData._id : false;
+                const senderId =
+                  typeof message.senderId === "string"
+                    ? message.senderId
+                    : message.senderId?._id;
+                const isFromMe = Boolean(
+                  currentUserData?._id && senderId === currentUserData._id,
+                );
 
                 return <MessageBubble key={message._id} message={message} isFromMe={isFromMe} />;
               })}

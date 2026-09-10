@@ -8,6 +8,7 @@ export interface IUser extends Document {
     email: string;
     password: string;
     avatar: string;
+    publicKey: string
     createdAt: Date;
     updatedAt: Date;
 }
@@ -35,6 +36,11 @@ const UserSchema = new Schema<IUser>({
         required: false,
         default: "",
     },
+    publicKey: {
+        type: String,
+        required: true,
+        default: "",
+    }
 }, {
     // this will add createdAt and updatedAt fields to the schema
     timestamps: true,
