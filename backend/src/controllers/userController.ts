@@ -11,7 +11,7 @@ export const getUsers = async (
     const userId = (req as AuthRequest).userId;
 
     const users = await User.find({ _id: { $ne: userId } }).select(
-      "name email avatar",
+      "name email avatar publicKey",
     ).limit(20);
     res.json(users);
   } catch (error) {

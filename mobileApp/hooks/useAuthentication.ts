@@ -6,7 +6,7 @@ import * as Sentry from "@sentry/react-native";
 export const useAuthLogin = () => {
   const {apiWithAuth} = useApi();
   return useMutation({
-    mutationFn: () => loginApi(apiWithAuth),
+    mutationFn: (publicKey: string) => loginApi(apiWithAuth, publicKey),
     onSuccess: (data) => {
       Sentry.logger.info("user profile details", {
         userData: data,

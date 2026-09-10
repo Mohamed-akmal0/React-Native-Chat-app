@@ -19,6 +19,7 @@ export const authCallback = async (req: Request, res: Response, next: NextFuncti
   try {
     const { userId: clerkId } = getAuth(req);
     if (!clerkId) return res.status(401).json({ message: "Unauthorized" });
+    const { publicKey } = req.body as { publicKey?: string };
     let user = await User.findOne({ clerkId });
     if (!user) {
       //fetching the user details form clerk and saving to the database;
@@ -29,8 +30,12 @@ export const authCallback = async (req: Request, res: Response, next: NextFuncti
           ? `${clerkUser.firstName} ${clerkUser.lastName}`
           : clerkUser.emailAddresses[0]?.emailAddress?.split("@")[0],
           email: clerkUser.emailAddresses[0]?.emailAddress,
-          avatar: clerkUser.imageUrl
+          avatar: clerkUser.imageUrl,
+          publicKey: publicKey ?? "",
       });
+    } else if (publicKey && user.publicKey !== publicKey) {
+      user.publicKey = publicKey;
+      await user.save();
     }
     res.json(user)
   } catch (error) {
