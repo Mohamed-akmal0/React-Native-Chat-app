@@ -23,11 +23,11 @@ const NewChatScreen = () => {
     useGetOrCreateChat();
 
   const filteredUsers = usersList?.filter((user) => {
-    const query = searchQuery.trim().toLowerCase();
+    const query = searchQuery?.trim()?.toLowerCase();
     return (
       !query ||
-      user.name.toLowerCase().includes(query) ||
-      user.email.toLowerCase().includes(query)
+      user?.name?.toLowerCase()?.includes(query) ||
+      user?.email?.toLowerCase()?.includes(query)
     );
   });
 
