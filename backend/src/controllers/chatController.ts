@@ -12,7 +12,7 @@ export const getChats = async (
     const userId = (req as AuthRequest).userId;
     const chats = await Chat.find({ participants: userId })
       //we have to call the populate function separately becuase only one populate can look up only one ref
-      .populate("participants", "name email avatar ")
+      .populate("participants", "name email avatar publicKey")
       .populate("lastMessage")
       .sort({ lastMessageAt: -1 });
     if (!chats) return res.status(404).json({ message: "No chats found!" });
