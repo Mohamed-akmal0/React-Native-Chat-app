@@ -8,7 +8,8 @@ export const useMessages = (chatId: string) => {
     queryKey: ["messages", chatId],
     queryFn: () => getUserMessages(apiWithAuth, chatId),
     enabled: !!chatId,
-    staleTime: 0,
-    refetchOnMount: "always",
+    // staleTime: 0,
+    // refetchOnMount: "always",
+    // ! commenting this to remove aggressive refetch, socket always update the cache
   });
 };

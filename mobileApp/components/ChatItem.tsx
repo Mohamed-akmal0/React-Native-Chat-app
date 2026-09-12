@@ -3,19 +3,36 @@ import { Chat, User } from "../types";
 import { Image } from "expo-image";
 import { formatDistanceToNow } from "date-fns";
 import { useSocketStore } from "../lib/socketStore";
+import { decryptMessage } from "../lib/encrypt";
 
 export const ChatItem = ({
   chat,
   onPress,
+  mySecreteKey,
 }: {
   chat: Chat;
   onPress: () => void;
+  mySecreteKey: string | undefined;
 }) => {
   const participant = chat?.otherParticipant;
   const lastMessage = chat?.lastMessage;
   const lastMessageTime = chat?.lastMessageAt;
+  const theirPublicKey = chat?.otherParticipant?.publicKey; // always the other person for nacl.box
 
   const { onlineUsers, typingUsers, unreadChats } = useSocketStore();
+
+  const lastMessageText =
+    lastMessage?.cipherText &&
+    lastMessage?.nonce &&
+    theirPublicKey &&
+    mySecreteKey
+      ? decryptMessage(
+          lastMessage.cipherText,
+          lastMessage.nonce,
+          theirPublicKey,
+          mySecreteKey,
+        )
+      : "";
 
   const isOnline = onlineUsers.has(participant._id);
   const istyping = typingUsers.get(chat._id) === participant._id;
@@ -67,7 +84,7 @@ export const ChatItem = ({
               className={`text-sm flex-1 mr-3 ${hasUnread ? "text-foregournd font-medium" : "text-subtle-foreground"}`}
               numberOfLines={1}
             >
-              {lastMessage?.text || "No Message yet"}
+              {lastMessageText || "No Message yet"}
             </Text>
           )}
         </View>

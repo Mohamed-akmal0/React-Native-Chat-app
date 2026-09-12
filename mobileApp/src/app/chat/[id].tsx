@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ScrollView,
   Text,
@@ -66,6 +66,7 @@ const ChatDetailScreen = () => {
 
   const [messageText, setMessageText] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [secretKey, setSecretKey] = useState<string | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
   //join chat on mount and leave on unmount
@@ -79,6 +80,14 @@ const ChatDetailScreen = () => {
     };
   }, [joinChat, leaveChat, isConnected, chatId]);
 
+  //loading current user secrete key
+  useEffect(() => {
+    if (!user?.id) return;
+    getPrivateKey(user.id).then((key) => {
+      if (key) setSecretKey(key);
+    });
+  }, [user?.id]);
+
   //scroll to bottom when new messages arrive
   useEffect(() => {
     if (messageData) {
@@ -87,6 +96,37 @@ const ChatDetailScreen = () => {
       }, 100);
     }
   }, [messageData]);
+
+  const decryptedMessages = useMemo(() => {
+    if (!messageData || !secretKey || !publicKey) return [];
+
+    return messageData.map((message: any) => {
+      const senderId =
+        typeof message.senderId === "string"
+          ? message.senderId
+          : message.senderId?._id;
+      const isFromMe = Boolean(
+        currentUserData?._id && senderId === currentUserData._id,
+      );
+
+      const theirPublicKey = isFromMe
+        ? publicKey
+        : typeof message.senderId === "string"
+          ? publicKey
+          : (message.senderId?.publicKey ?? publicKey);
+
+      const plaintext =
+        message.plaintext ??
+        decryptMessage(
+          message.cipherText,
+          message.nonce,
+          theirPublicKey,
+          secretKey,
+        );
+
+      return { ...message, isFromMe, plaintext };
+    });
+  }, [messageData, secretKey, publicKey, currentUserData?._id]);
 
   const handleUserTyping = useCallback(
     (text: string) => {
@@ -223,38 +263,14 @@ const ChatDetailScreen = () => {
                 scrollViewRef.current?.scrollToEnd({ animated: false });
               }}
             >
-              {messageData?.map((message: any) => {
-                const senderId =
-                  typeof message.senderId === "string"
-                    ? message.senderId
-                    : message.senderId?._id;
-                const isFromMe = Boolean(
-                  currentUserData?._id && senderId === currentUserData._id,
-                );
 
-                const theirPublicKey = isFromMe
-                  ? publicKey
-                  : typeof message.senderId === "string"
-                    ? publicKey
-                    : message.senderId.publicKey;
-
-                const plainText = decryptMessage(
-                  message.cipherText,
-                  message.nonce,
-                  theirPublicKey,
-                  user?.id,
-                );
-
-                console.log('plain text')
-
-                return (
-                  <MessageBubble
-                    key={message._id}
-                    message={plainText}
-                    isFromMe={isFromMe}
-                  />
-                );
-              })}
+              {decryptedMessages.map((message: any) => (
+                <MessageBubble
+                  key={message._id}
+                  message={message.plaintext || " "}
+                  isFromMe={message.isFromMe}
+                />
+              ))}
             </ScrollView>
           )}
 
