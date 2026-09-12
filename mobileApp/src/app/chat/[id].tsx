@@ -1,31 +1,49 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ScrollView, Text, View, Pressable, ActivityIndicator, TextInput ,KeyboardAvoidingView, Platform } from "react-native";
+import {
+  ScrollView,
+  Text,
+  View,
+  Pressable,
+  ActivityIndicator,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useCurrentUser } from "../../../hooks/useUsers";
 import { useMessages } from "../../../hooks/useMessages";
 import { useSocketStore } from "../../../lib/socketStore";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import EmptyUI from "../../../components/EmptyUI"
-import MessageBubble from "../../../components/MessageBubble"
+import EmptyUI from "../../../components/EmptyUI";
+import MessageBubble from "../../../components/MessageBubble";
+import {
+  decryptMessage,
+  encryptMessage,
+  getPrivateKey,
+} from "../../../lib/encrypt";
+import { useUser } from "@clerk/expo";
 
 type ChatDetailsParams = {
   id: string;
   participantId: string;
   name: string;
   avatar: string;
+  publicKey: string;
 };
 
 const ChatDetailScreen = () => {
   const router = useRouter();
+  const { user } = useUser();
+
   const {
     id: chatId,
     participantId,
     name,
     avatar,
+    publicKey,
   } = useLocalSearchParams<ChatDetailsParams>();
-  // console.log('details in chat d', id, participantId, name, avatar)
 
   const { data: currentUserData } = useCurrentUser();
   const { data: messageData, isLoading } = useMessages(chatId);
@@ -65,66 +83,100 @@ const ChatDetailScreen = () => {
   useEffect(() => {
     if (messageData) {
       setTimeout(() => {
-
         scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 100)
+      }, 100);
     }
   }, [messageData]);
 
-  const handleUserTyping = useCallback((text: string) => {
-    setMessageText(text);
-    if(!isConnected || !chatId) return
-    if(text.length > 0){
-      //sending typing event
-      sendTyping(chatId, true)
-      //clearing existing typing timeout
-      if(typingTimoutRef.current){{
-        clearTimeout(typingTimoutRef.current)
-      }}
-      //stop typing after 2 sec of no input
-      typingTimoutRef.current = setTimeout(() => {
-        sendTyping(chatId, false)
-      }, 2000)
-    }
-  }, [isConnected, sendTyping, chatId]);
+  const handleUserTyping = useCallback(
+    (text: string) => {
+      setMessageText(text);
+      if (!isConnected || !chatId) return;
+      if (text.length > 0) {
+        //sending typing event
+        sendTyping(chatId, true);
+        //clearing existing typing timeout
+        if (typingTimoutRef.current) {
+          {
+            clearTimeout(typingTimoutRef.current);
+          }
+        }
+        //stop typing after 2 sec of no input
+        typingTimoutRef.current = setTimeout(() => {
+          sendTyping(chatId, false);
+        }, 2000);
+      }
+    },
+    [isConnected, sendTyping, chatId],
+  );
 
-  const handleSendMessage = () => {
-    console.log('hitting', !messageText.trim() , !isConnected , !chatId , isSending , !currentUserData)
-    if(!messageText.trim() || !isConnected || !chatId || isSending || !currentUserData) return
-    console.log("under if")
-    if(typingTimoutRef.current){
-      clearTimeout(typingTimoutRef.current)
+  const handleSendMessage = async () => {
+    if (
+      !messageText.trim() ||
+      !isConnected ||
+      !chatId ||
+      isSending ||
+      !currentUserData
+    )
+      return;
+    if (typingTimoutRef.current) {
+      clearTimeout(typingTimoutRef.current);
     }
+    const mySecreteKey = await getPrivateKey(user?.id);
+    const encryptedMessage = encryptMessage(
+      messageText.trim(),
+      publicKey,
+      mySecreteKey,
+    );
+    if (!encryptMessage) return;
+    // return
     sendTyping(chatId, false);
     setIsSending(true);
-    sendMessage(chatId, messageText.trim(), {
-      _id: currentUserData?._id ?? "", 
-      name: currentUserData?.name ?? "",
-      email: currentUserData?.email ?? "",
-      avatar: currentUserData?.avatar ?? ""
-    });
+    sendMessage(
+      chatId,
+      {
+        cipherText: encryptedMessage?.cipherText,
+        nonce: encryptedMessage?.nonce,
+      },
+      {
+        _id: currentUserData?._id ?? "",
+        name: currentUserData?.name ?? "",
+        email: currentUserData?.email ?? "",
+        avatar: currentUserData?.avatar ?? "",
+      },
+    );
     setMessageText("");
     setIsSending(false);
 
     setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({animated: true})
-    }, 100)
-  }
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  };
 
   return (
-    <SafeAreaView className="flex-1" edges={["bottom" ,"top"]} >
+    <SafeAreaView className="flex-1" edges={["bottom", "top"]}>
       {/* Header */}
       <View className="flex-row items-center px-4 py-2 bg-surface border-b border-surface-light">
         <Pressable onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#F4A261" />
         </Pressable>
         <View className="flex-row items-center flex-1 ml-2">
-          {avatar && <Image source={avatar} style={{ width: 40, height: 40, borderRadius: 999 }} />}
+          {avatar && (
+            <Image
+              source={avatar}
+              style={{ width: 40, height: 40, borderRadius: 999 }}
+            />
+          )}
           <View className="ml-3">
-            <Text className="text-foreground font-semibold text-base" numberOfLines={1}>
+            <Text
+              className="text-foreground font-semibold text-base"
+              numberOfLines={1}
+            >
               {name}
             </Text>
-            <Text className={`text-xs ${isTyping ? "text-primary" : "text-muted-foreground"}`}>
+            <Text
+              className={`text-xs ${isTyping ? "text-primary" : "text-muted-foreground"}`}
+            >
               {isTyping ? "typing..." : isOnline ? "Online" : "Offline"}
             </Text>
           </View>
@@ -162,7 +214,11 @@ const ChatDetailScreen = () => {
           ) : (
             <ScrollView
               ref={scrollViewRef}
-              contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12, gap: 8 }}
+              contentContainerStyle={{
+                paddingHorizontal: 16,
+                paddingVertical: 12,
+                gap: 8,
+              }}
               onContentSizeChange={() => {
                 scrollViewRef.current?.scrollToEnd({ animated: false });
               }}
@@ -176,7 +232,28 @@ const ChatDetailScreen = () => {
                   currentUserData?._id && senderId === currentUserData._id,
                 );
 
-                return <MessageBubble key={message._id} message={message} isFromMe={isFromMe} />;
+                const theirPublicKey = isFromMe
+                  ? publicKey
+                  : typeof message.senderId === "string"
+                    ? publicKey
+                    : message.senderId.publicKey;
+
+                const plainText = decryptMessage(
+                  message.cipherText,
+                  message.nonce,
+                  theirPublicKey,
+                  user?.id,
+                );
+
+                console.log('plain text')
+
+                return (
+                  <MessageBubble
+                    key={message._id}
+                    message={plainText}
+                    isFromMe={isFromMe}
+                  />
+                );
               })}
             </ScrollView>
           )}

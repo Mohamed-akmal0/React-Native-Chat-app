@@ -29,6 +29,7 @@ const ChatsScreen = () => {
         participantId: item.otherParticipant._id,
         name: item.otherParticipant.name,
         avatar: item.otherParticipant.avatar,
+        publicKey: item.otherParticipant?.publicKey
       },
     });
   };

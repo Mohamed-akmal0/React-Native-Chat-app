@@ -13,6 +13,10 @@ if (!publishableKey) {
   throw new Error("Add your Clerk Publishable Key to the .env file");
 }
 
+if(__DEV__){
+  require("../../ReactotronConfig")
+}
+
 Sentry.init({
   dsn: "https://3f433e5139c4d20abcef8c2b8f051027@o4511937027899392.ingest.us.sentry.io/4511937029537792",
 

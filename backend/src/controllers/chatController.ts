@@ -60,12 +60,12 @@ export const getOrCreateChat = async (
     let chat = await Chat.findOne({
       participants: { $all: [userId, participantId] },
     })
-      .populate("participants", "name email avatar ")
+      .populate("participants", "name email avatar publicKey")
       .populate("lastMessage");
     if (!chat) {
       const newChat = new Chat({ participants: [userId, participantId] });
       await newChat.save();
-      chat = await newChat.populate("participants", "name email avatar ");
+      chat = await newChat.populate("participants", "name email avatar publicKey");
     }
     const otherParticipant = chat.participants.find(
       (p) => p._id.toString() !== userId.toString(),

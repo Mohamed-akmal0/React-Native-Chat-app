@@ -71,6 +71,7 @@ export const getAllUsers = async (apiWithAuth: ApiWithAuth) => {
       method: "GET",
       url: users.users,
     });
+    console.log('return data', data)
     return data;
   } catch (error) {
     console.log("err in get users api", error);

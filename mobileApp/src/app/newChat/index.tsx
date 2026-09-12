@@ -47,6 +47,7 @@ const NewChatScreen = () => {
               participantId: userDetails._id,
               name: userDetails.name,
               avatar: userDetails.avatar,
+              publicKey: userDetails?.publicKey
             },
           });
         }, 100);

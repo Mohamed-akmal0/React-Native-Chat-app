@@ -17,7 +17,7 @@ export const getMessages = async (
     // so we only get the senderId in response
     // so if we give populate, it will follow up a lookup in the ref that we gave in the scheme and fetch the details that we want
     const messages = await Message.find({ chatId: chatId })
-      .populate("senderId", "name email avatar")
+      .populate("senderId", "name email avatar publicKey")
       .sort({ createdAt: 1 }); //older messages first!
     res.json(messages);
   } catch (error) {
