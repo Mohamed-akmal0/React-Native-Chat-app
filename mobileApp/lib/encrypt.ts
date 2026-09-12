@@ -88,14 +88,13 @@ export const encryptMessage = (
   }
 };
 
-export const decryptMessage = async (
+export const decryptMessage = (
   cipherText: string,
   nounceB64: string,
   senderPublicKeyB64: string,
-  userId: string | undefined,
+  mySecretKey: string | any
 ) => {
   try {
-    const mySecretKey: any = await getPrivateKey(userId);
     const decryptedMessage = nacl.box.open(
       decodeBase64(cipherText),
       decodeBase64(nounceB64),
@@ -104,8 +103,9 @@ export const decryptMessage = async (
     );
     if (!decryptedMessage) throw new Error("Failed to decrypt");
     return encodeUTF8(decryptedMessage);
-  } catch (error) {
-    console.log("err in decrypt message", error);
+  } catch (error: any) {
+    // console.log("err in decrypt message", error);
+    console.log(error instanceof Error, error.message, String(error));
     return;
   }
 };

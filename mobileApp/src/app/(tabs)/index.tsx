@@ -12,14 +12,24 @@ import { ChatItem } from "../../../components/ChatItem";
 import { ChatHeader } from "../../../components/ChatHeader";
 import EmptyUI from "../../../components/EmptyUI";
 import { Chat } from "../../../types";
+import { useCurrentUser } from "../../../hooks/useUsers";
+import { useEffect, useState } from "react";
+import { getPrivateKey } from "../../../lib/encrypt";
+import { useUser } from "@clerk/expo";
 
 const ChatsScreen = () => {
   const router = useRouter();
-  const {
-    data: userChatList,
-    isLoading,
-    error,
-  } = useGetUserChatList();
+  const {user} = useUser()
+  const { data: userChatList, isLoading, error } = useGetUserChatList();;
+  //state
+  const [secretKey, setSecretKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    getPrivateKey(user.id).then((key) => {
+      if (key) setSecretKey(key);
+    });
+  }, [user?.id]);
 
   const handleChatPress = (item: Chat) => {
     router.push({
@@ -29,7 +39,7 @@ const ChatsScreen = () => {
         participantId: item.otherParticipant._id,
         name: item.otherParticipant.name,
         avatar: item.otherParticipant.avatar,
-        publicKey: item.otherParticipant?.publicKey
+        publicKey: item.otherParticipant?.publicKey,
       },
     });
   };
@@ -69,7 +79,11 @@ const ChatsScreen = () => {
         data={userChatList}
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
-          <ChatItem chat={item} onPress={() => handleChatPress(item)} />
+          <ChatItem
+            chat={item}
+            onPress={() => handleChatPress(item)}
+            mySecreteKey={secretKey}
+          />
         )}
         ListHeaderComponent={<ChatHeader />}
         showsVerticalScrollIndicator={false}
@@ -85,7 +99,9 @@ const ChatsScreen = () => {
               title="No chat found!"
               subtitle="Start new chat!"
               buttonLabel="New chat"
-              onPressButton={() => {router.push("/newChat")}}
+              onPressButton={() => {
+                router.push("/newChat");
+              }}
             />
           )
         }

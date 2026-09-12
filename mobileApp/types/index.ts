@@ -27,8 +27,9 @@ export interface User {
   
   export interface ChatLastMessage {
     _id: string;
-    text: string;
-    sender: string;
+    cipherText: string;
+    nonce: string;
+    senderId: string;
     createdAt: string;
   }
   

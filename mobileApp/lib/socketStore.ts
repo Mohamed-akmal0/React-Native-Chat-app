@@ -115,8 +115,12 @@ export const useSocketStore = create<socketState>((set, get) => ({
               ...chat,
               lastMessage: {
                 _id: message._id,
-                text: message.text,
-                sender: senderId,
+                cipherText: message.cipherText,
+                nonce: message.nonce,
+                senderId:
+                  typeof message.senderId === "string"
+                    ? message.senderId
+                    : message.senderId._id,
                 createdAt: message.createdAt,
               },
               lastMessageAt: message.createdAt,

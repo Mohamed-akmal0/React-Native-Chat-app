@@ -2,7 +2,7 @@ import { Message } from "../types";
 import { View, Text } from "react-native";
 
 // function MessageBubble({ message, isFromMe }: { message: Message; isFromMe: boolean }) {
-function MessageBubble({ message, isFromMe }: { message: any; isFromMe: boolean }) {
+function MessageBubble({ message, isFromMe }: { message: string; isFromMe: boolean }) {
   return (
     <View className={`flex-row ${isFromMe ? "justify-end" : "justify-start"}`}>
       <View
