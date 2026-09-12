@@ -1,7 +1,8 @@
 import { Message } from "../types";
 import { View, Text } from "react-native";
 
-function MessageBubble({ message, isFromMe }: { message: Message; isFromMe: boolean }) {
+// function MessageBubble({ message, isFromMe }: { message: Message; isFromMe: boolean }) {
+function MessageBubble({ message, isFromMe }: { message: any; isFromMe: boolean }) {
   return (
     <View className={`flex-row ${isFromMe ? "justify-end" : "justify-start"}`}>
       <View
@@ -12,7 +13,7 @@ function MessageBubble({ message, isFromMe }: { message: Message; isFromMe: bool
         }`}
       >
         <Text className={`text-sm ${isFromMe ? "text-surface-dark" : "text-foreground"}`}>
-          {message.text}
+          {message}
         </Text>
       </View>
     </View>

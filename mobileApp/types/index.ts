@@ -11,13 +11,16 @@ export interface User {
     name: string;
     email: string;
     avatar: string;
+    publicKey?: string;
   }
   
   export interface Message {
     _id: string;
     chatId: string;
     senderId: MessageSender | string;
-    text: string;
+    text?: string;
+    cipherText: string | any;
+    nonce: string | any;
     createdAt: string;
     updatedAt: string;
   }

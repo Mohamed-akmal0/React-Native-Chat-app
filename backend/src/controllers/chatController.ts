@@ -12,7 +12,7 @@ export const getChats = async (
     const userId = (req as AuthRequest).userId;
     const chats = await Chat.find({ participants: userId })
       //we have to call the populate function separately becuase only one populate can look up only one ref
-      .populate("participants", "name email avatar ")
+      .populate("participants", "name email avatar publicKey")
       .populate("lastMessage")
       .sort({ lastMessageAt: -1 });
     if (!chats) return res.status(404).json({ message: "No chats found!" });
@@ -60,12 +60,12 @@ export const getOrCreateChat = async (
     let chat = await Chat.findOne({
       participants: { $all: [userId, participantId] },
     })
-      .populate("participants", "name email avatar ")
+      .populate("participants", "name email avatar publicKey")
       .populate("lastMessage");
     if (!chat) {
       const newChat = new Chat({ participants: [userId, participantId] });
       await newChat.save();
-      chat = await newChat.populate("participants", "name email avatar ");
+      chat = await newChat.populate("participants", "name email avatar publicKey");
     }
     const otherParticipant = chat.participants.find(
       (p) => p._id.toString() !== userId.toString(),

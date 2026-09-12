@@ -6,13 +6,17 @@ export interface IMessage extends Document {
   text: string;
   createdAt: Date;
   updatedAt: Date;
+  cipherText: string;
+  nonce: string
 }
 
 const MessageSchema = new Schema<IMessage>(
   {
     chatId: { type: Schema.Types.ObjectId, ref: "Chat", required: true },
     senderId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    text: { type: String, required: true, trim: true }, // trim is added to remove the extra spaces from the message.
+    // text: { type: String, required: false, trim: true}, // trim is added to remove the extra spaces from the message.
+    cipherText: {type: String, required: true},
+    nonce: {type: String, required: true}
   },
   { timestamps: true },
 );

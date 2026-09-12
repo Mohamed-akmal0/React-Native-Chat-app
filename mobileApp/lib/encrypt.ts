@@ -1,6 +1,6 @@
 import "react-native-get-random-values";
 import nacl from "tweetnacl";
-import { decodeBase64, encodeBase64 } from "tweetnacl-util";
+import { decodeBase64, decodeUTF8, encodeBase64, encodeUTF8 } from "tweetnacl-util";
 import * as SecureStore from "expo-secure-store";
 
 type KeyPair = { publicKey: string; privateKey: string };
@@ -45,13 +45,12 @@ export const ensureKeyPair = async (userId: string): Promise<KeyPair> => {
   }
 
   const generatedPair = generateKeyPair();
-  console.log('generated pair', generatedPair)
   await savePrivateKey(userId, generatedPair.privateKey);
   cachedPrivateKey = generatedPair.privateKey;
   return generatedPair;
 };
 
-export async function getPrivateKey(userId: string) {
+export async function getPrivateKey(userId: string | any) {
   if (cachedPrivateKey) return cachedPrivateKey;
   const stored = await SecureStore.getItemAsync(storageKey(userId));
   cachedPrivateKey = stored;
@@ -61,3 +60,52 @@ export async function getPrivateKey(userId: string) {
 export function clearPrivateKeyCache() {
   cachedPrivateKey = null;
 }
+
+//encrypting message
+export const encryptMessage = (
+  message: string,
+  receiverPublicKeyB64: any,
+  senderSecretKeyB64: any,
+) => {
+  try {
+    // ! decode when going into Nacl, encode when storing or sending the result
+    const recieverPublicKey: any = decodeBase64(receiverPublicKeyB64);
+    const senderSecretKey: any = decodeBase64(senderSecretKeyB64);
+    const nonce = nacl.randomBytes(nacl.box.nonceLength);
+    const messageUnit8 = decodeUTF8(message);
+    const encrypted = nacl.box(
+      messageUnit8,
+      nonce,
+      recieverPublicKey,
+      senderSecretKey,
+    );
+    return {
+      cipherText: encodeBase64(encrypted),
+      nonce: encodeBase64(nonce),
+    };
+  } catch (err: any) {
+    console.log(err instanceof Error, err.message, String(err)); // actual reason
+  }
+};
+
+export const decryptMessage = async (
+  cipherText: string,
+  nounceB64: string,
+  senderPublicKeyB64: string,
+  userId: string | undefined,
+) => {
+  try {
+    const mySecretKey: any = await getPrivateKey(userId);
+    const decryptedMessage = nacl.box.open(
+      decodeBase64(cipherText),
+      decodeBase64(nounceB64),
+      decodeBase64(senderPublicKeyB64),
+      decodeBase64(mySecretKey),
+    );
+    if (!decryptedMessage) throw new Error("Failed to decrypt");
+    return encodeUTF8(decryptedMessage);
+  } catch (error) {
+    console.log("err in decrypt message", error);
+    return;
+  }
+};

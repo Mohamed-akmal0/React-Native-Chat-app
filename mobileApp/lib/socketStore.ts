@@ -19,7 +19,11 @@ export interface socketState {
   leaveChat: (chatId: string) => void;
   sendMessage: (
     chatId: string,
-    text: string,
+    // text: string,
+    encrypted: {
+      cipherText: string | undefined;
+      nonce: string | undefined;
+    },
     currentUser: MessageSender,
   ) => void;
   sendTyping: (chatId: string, isTyping: boolean) => void;
@@ -207,7 +211,7 @@ export const useSocketStore = create<socketState>((set, get) => ({
     }
   },
 
-  sendMessage: (chatId: string, text: string, currentUser) => {
+  sendMessage: (chatId: string, encrypted, currentUser) => {
     const socket = get().socket;
     const queryClient = get().queryClient;
 
@@ -220,7 +224,9 @@ export const useSocketStore = create<socketState>((set, get) => ({
       _id: tempId,
       chatId,
       senderId: currentUser,
-      text,
+      // text,
+      cipherText: encrypted.cipherText,
+      nonce: encrypted.nonce,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -231,7 +237,12 @@ export const useSocketStore = create<socketState>((set, get) => ({
       return [...old, tempMessage];
     });
 
-    socket?.emit("send-message", { chatId, text });
+    // socket?.emit("send-message", { chatId, text });
+    socket.emit("send-message", {
+      chatId,
+      cipherText: encrypted.cipherText,
+      nonce: encrypted.nonce,
+    });
     //error handler method
     const errorHandler = (error: { message: string }) => {
       Sentry.logger.error("Failed to send message", {

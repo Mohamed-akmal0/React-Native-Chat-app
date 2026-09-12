@@ -95,9 +95,9 @@ export const initializeSocket = (httpServer: httpServer) => {
     //handling sending messages
     socket.on(
       "send-message",
-      async (data: { chatId: string; text: string }) => {
+      async (data: { chatId: string; cipherText: string; nonce: string }) => {
         try {
-          const { chatId, text } = data;
+          const { chatId, cipherText, nonce } = data;
           //checking chat is existed or not
           const chat = await Chat.findOne({
             _id: chatId,
@@ -113,14 +113,15 @@ export const initializeSocket = (httpServer: httpServer) => {
           const message = await Message.create({
             chatId: chatId,
             senderId: userId,
-            text,
+            cipherText,
+            nonce
           });
 
           chat.lastMessage = message._id;
           chat.lastMessageAt = new Date();
           await chat.save();
 
-          await message.populate("senderId", "name email avatar");
+          await message.populate("senderId", "name email avatar publicKey");
 
           const payload = message.toJSON();
 
