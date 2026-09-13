@@ -107,3 +107,24 @@ export const getUserMessages = async (
     throw error;
   }
 };
+
+export const editMessage = async (
+  apiWithAuth: ApiWithAuth,
+  editMessageArgs :{messageId:string, cipherText:string, nonce:string},
+) => {
+  try {
+    const {messageId, cipherText, nonce} = editMessageArgs
+    const { data } = await apiWithAuth({
+      method: "PATCH",
+      url: chats.editMessage(messageId),
+      data: {
+        cipherText,
+        nonce,
+      },
+    });
+    return data;
+  } catch (error) {
+    console.log("err in get message api", error);
+    throw error;
+  }
+};

@@ -63,7 +63,7 @@ export function clearPrivateKeyCache() {
 
 //encrypting message
 export const encryptMessage = (
-  message: string,
+  message: string | any,
   receiverPublicKeyB64: any,
   senderSecretKeyB64: any,
 ) => {

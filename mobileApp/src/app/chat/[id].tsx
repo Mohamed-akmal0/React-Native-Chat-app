@@ -9,10 +9,11 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  LayoutRectangle,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useCurrentUser } from "../../../hooks/useUsers";
-import { useMessages } from "../../../hooks/useMessages";
+import { useEditMessage, useMessages } from "../../../hooks/useMessages";
 import { useSocketStore } from "../../../lib/socketStore";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
@@ -24,6 +25,7 @@ import {
   getPrivateKey,
 } from "../../../lib/encrypt";
 import { useUser } from "@clerk/expo";
+import MessageActions from "../../../components/MessageActions";
 
 type ChatDetailsParams = {
   id: string;
@@ -47,6 +49,8 @@ const ChatDetailScreen = () => {
 
   const { data: currentUserData } = useCurrentUser();
   const { data: messageData, isLoading } = useMessages(chatId);
+  const { mutateAsync: editMessageMutation, isPending: isEditingPending } =
+  useEditMessage(chatId);
 
   const {
     isConnected,
@@ -67,6 +71,19 @@ const ChatDetailScreen = () => {
   const [messageText, setMessageText] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [secretKey, setSecretKey] = useState<string | null>(null);
+  const [editMessage, setEditMessage] = useState<string | null>(null);
+  const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [showMessageActionsHeader, setShowMessageActionsHeader] =
+    useState(false);
+  const [showMessageAction, setShowMessageAction] = useState(false);
+  const [actionAnchor, setActionAnchor] = useState<LayoutRectangle | null>(
+    null,
+  );
+  const [actionIsFromMe, setActionIsFromMe] = useState(false);
+  const [isEditting, setIsEditting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
   //join chat on mount and leave on unmount
@@ -130,29 +147,35 @@ const ChatDetailScreen = () => {
 
   const handleUserTyping = useCallback(
     (text: string) => {
-      setMessageText(text);
-      if (!isConnected || !chatId) return;
-      if (text.length > 0) {
-        //sending typing event
-        sendTyping(chatId, true);
-        //clearing existing typing timeout
-        if (typingTimoutRef.current) {
-          {
-            clearTimeout(typingTimoutRef.current);
+      if (isEditting) {
+        // * if we are editting no need to trigger the typing event
+        setEditMessage(text);
+        return;
+      } else {
+        setMessageText(text);
+        if (!isConnected || !chatId) return;
+        if (text.length > 0) {
+          //sending typing event
+          sendTyping(chatId, true);
+          //clearing existing typing timeout
+          if (typingTimoutRef.current) {
+            {
+              clearTimeout(typingTimoutRef.current);
+            }
           }
+          //stop typing after 2 sec of no input
+          typingTimoutRef.current = setTimeout(() => {
+            sendTyping(chatId, false);
+          }, 2000);
         }
-        //stop typing after 2 sec of no input
-        typingTimoutRef.current = setTimeout(() => {
-          sendTyping(chatId, false);
-        }, 2000);
       }
     },
-    [isConnected, sendTyping, chatId],
+    [isConnected, sendTyping, chatId, isEditting],
   );
 
   const handleSendMessage = async () => {
     if (
-      !messageText.trim() ||
+      !messageText?.trim() ||
       !isConnected ||
       !chatId ||
       isSending ||
@@ -162,11 +185,11 @@ const ChatDetailScreen = () => {
     if (typingTimoutRef.current) {
       clearTimeout(typingTimoutRef.current);
     }
-    const mySecreteKey = await getPrivateKey(user?.id);
     const encryptedMessage = encryptMessage(
       messageText.trim(),
+      // userMessageText,
       publicKey,
-      mySecreteKey,
+      secretKey,
     );
     if (!encryptMessage) return;
     // return
@@ -186,6 +209,8 @@ const ChatDetailScreen = () => {
       },
     );
     setMessageText("");
+    setEditMessage(null);
+    setIsEditting(false);
     setIsSending(false);
 
     setTimeout(() => {
@@ -193,43 +218,120 @@ const ChatDetailScreen = () => {
     }, 100);
   };
 
+  const handleSubmit = async () => {
+    const text = (isEditting ? editMessage : messageText)?.trim()
+    if (!text || !chatId || !currentUserData || isSending) return;
+    if (!secretKey) return;
+    const encrypted = encryptMessage(text, publicKey, secretKey);
+    if (!encrypted) return;
+    setIsSending(true);
+    sendTyping(chatId, false);
+    try {
+      if (editingMessageId) {
+        // REST edit
+        await editMessageMutation({
+          messageId: editingMessageId,
+          cipherText: encrypted.cipherText,
+          nonce: encrypted.nonce,
+        });
+        setEditingMessageId(null);
+        setIsEditting(false);
+        setEditMessage(null);
+      } else {
+        // socket send
+        if (!isConnected) return;
+        sendMessage(
+          chatId,
+          { cipherText: encrypted.cipherText, nonce: encrypted.nonce },
+          {
+            _id: currentUserData._id,
+            name: currentUserData.name,
+            email: currentUserData.email,
+            avatar: currentUserData.avatar,
+          },
+        );
+      }
+      setMessageText("");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  //this is for selecting multiple messages and show the message actions in the header
+  //if the user selects only one, then we can show the edit or else only delete button and the count
+  const handleMessageLongPress = (message: string) => {
+    setEditMessage(message);
+    setShowMessageActionsHeader(true);
+  };
+
+  const handleOnPress = (
+    messageId:string,
+    message: string,
+    anchor: LayoutRectangle,
+    isFromMe: boolean,
+  ) => {
+    setSelectedMessageId(messageId)
+    setSelectedMessage(message);
+    setActionAnchor(anchor);
+    setActionIsFromMe(isFromMe);
+    setShowMessageAction(true);
+  };
+
   return (
     <SafeAreaView className="flex-1" edges={["bottom", "top"]}>
-      {/* Header */}
-      <View className="flex-row items-center px-4 py-2 bg-surface border-b border-surface-light">
-        <Pressable onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#F4A261" />
-        </Pressable>
-        <View className="flex-row items-center flex-1 ml-2">
-          {avatar && (
-            <Image
-              source={avatar}
-              style={{ width: 40, height: 40, borderRadius: 999 }}
-            />
-          )}
-          <View className="ml-3">
-            <Text
-              className="text-foreground font-semibold text-base"
-              numberOfLines={1}
-            >
-              {name}
-            </Text>
-            <Text
-              className={`text-xs ${isTyping ? "text-primary" : "text-muted-foreground"}`}
-            >
-              {isTyping ? "typing..." : isOnline ? "Online" : "Offline"}
-            </Text>
+      {showMessageActionsHeader ? (
+        <>{/* long press edit header */}</>
+      ) : (
+        <View className="flex-row items-center px-4 py-2 bg-surface border-b border-surface-light">
+          {/* Header */}
+          <Pressable onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color="#F4A261" />
+          </Pressable>
+          <View className="flex-row items-center flex-1 ml-2">
+            {avatar && (
+              <Image
+                source={avatar}
+                style={{ width: 40, height: 40, borderRadius: 999 }}
+              />
+            )}
+            <View className="ml-3">
+              <Text
+                className="text-foreground font-semibold text-base"
+                numberOfLines={1}
+              >
+                {name}
+              </Text>
+              <Text
+                className={`text-xs ${isTyping ? "text-primary" : "text-muted-foreground"}`}
+              >
+                {isTyping ? "typing..." : isOnline ? "Online" : "Offline"}
+              </Text>
+            </View>
+          </View>
+          <View className="flex-row items-center gap-3">
+            <Pressable className="w-9 h-9 rounded-full items-center justify-center">
+              <Ionicons name="call-outline" size={20} color="#A0A0A5" />
+            </Pressable>
+            <Pressable className="w-9 h-9 rounded-full items-center justify-center">
+              <Ionicons name="videocam-outline" size={20} color="#A0A0A5" />
+            </Pressable>
           </View>
         </View>
-        <View className="flex-row items-center gap-3">
-          <Pressable className="w-9 h-9 rounded-full items-center justify-center">
-            <Ionicons name="call-outline" size={20} color="#A0A0A5" />
-          </Pressable>
-          <Pressable className="w-9 h-9 rounded-full items-center justify-center">
-            <Ionicons name="videocam-outline" size={20} color="#A0A0A5" />
-          </Pressable>
-        </View>
-      </View>
+      )}
+
+      {showMessageAction && actionAnchor && selectedMessage && (
+        <MessageActions
+          setIsDeleting={setIsDeleting}
+          setIsEditting={setIsEditting}
+          setShowMessageAction={setShowMessageAction}
+          anchor={actionAnchor}
+          isFromMe={actionIsFromMe}
+          setEditMessage={setEditMessage}
+          selectedMessage={selectedMessage}
+          setEditingMessageId={setEditingMessageId}
+          selectedMessageId={selectedMessageId}
+        />
+      )}
 
       {/* Message + Keyboard input */}
 
@@ -263,12 +365,15 @@ const ChatDetailScreen = () => {
                 scrollViewRef.current?.scrollToEnd({ animated: false });
               }}
             >
-
               {decryptedMessages.map((message: any) => (
                 <MessageBubble
                   key={message._id}
+                  messageId={message._id}
                   message={message.plaintext || " "}
                   isFromMe={message.isFromMe}
+                  onLongPress={handleMessageLongPress}
+                  onPress={handleOnPress}
+                  isEditted={message.isEditted}
                 />
               ))}
             </ScrollView>
@@ -287,16 +392,21 @@ const ChatDetailScreen = () => {
                 className="flex-1 text-foreground text-sm mb-2"
                 multiline
                 style={{ maxHeight: 100 }}
-                value={messageText}
+                value={isEditting ? (editMessage ?? "") : messageText}
                 onChangeText={handleUserTyping}
-                onSubmitEditing={handleSendMessage}
+                // onSubmitEditing={handleSendMessage}
+                onSubmitEditing={handleSubmit}
                 editable={!isSending}
               />
 
               <Pressable
                 className="w-8 h-8 rounded-full items-center justify-center bg-primary"
-                onPress={handleSendMessage}
-                disabled={!messageText.trim() || isSending}
+                // onPress={handleSendMessage}
+                onPress={handleSubmit}
+                disabled={
+                  isSending ||
+                  !(isEditting ? editMessage?.trim() : messageText.trim())
+                }
               >
                 {isSending ? (
                   <ActivityIndicator size="small" color="#0D0D0F" />

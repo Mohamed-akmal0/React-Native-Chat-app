@@ -155,6 +155,14 @@ export const useSocketStore = create<socketState>((set, get) => ({
       });
     });
 
+    socket.on("message-editted", (message: Message) => {
+      const chatId = String(message.chatId ?? "");
+      queryClient.setQueryData<Message[]>(["messages", chatId], (old) =>
+        old?.map((m) => (m._id === message._id ? { ...m, ...message } : m)),
+      );
+      // if this is lastMessage, update ["chats"] cipherText/nonce too
+    });
+
     socket.on(
       "typing",
       ({

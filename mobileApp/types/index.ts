@@ -23,6 +23,7 @@ export interface User {
     nonce: string | any;
     createdAt: string;
     updatedAt: string;
+    isEditted: boolean;
   }
   
   export interface ChatLastMessage {
