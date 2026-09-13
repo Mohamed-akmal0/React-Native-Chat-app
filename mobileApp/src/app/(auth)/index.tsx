@@ -21,36 +21,49 @@ const LoginScreen = () => {
 
   return (
     <View className="flex-1  bg-surface-dark">
+
       <View className="absolute inset-0 overflow-hidden">
         <LinearGradient
-          colors={["#0D0D0F", "#1A1A2E", "#16213E", "#0D0D0F"]}
-          style={{ position: "absolute", width: "100%", height: "100%" }}
+          colors={["#0A0A0C", "#11111A", "#17152B", "#0A0A0C"]}
+          style={{
+            position: "absolute",
+            width: "100%",
+            height: "100%",
+          }}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         />
+
+        {/* Top-left — Indigo */}
         <AnimatedOrb
-          colors={["#F4A261", "#E76F51"]}
+          colors={["#7C6FF7", "#6357D9"]}
           size={300}
           initialX={-80}
           initialY={height * 0.1}
           duration={4000}
         />
+
+        {/* Top-right — Blue/Indigo */}
         <AnimatedOrb
-          colors={["#E76F51", "#F4A261"]}
+          colors={["#6366F1", "#4F46E5"]}
           size={250}
           initialX={width - 100}
           initialY={height * 0.3}
           duration={5000}
         />
+
+        {/* Middle — Soft Violet */}
         <AnimatedOrb
-          colors={["#FFD7BA", "#F4A261"]}
+          colors={["#9B91FF", "#7C6FF7"]}
           size={200}
           initialX={width * 0.3}
           initialY={height * 0.6}
           duration={3500}
         />
+
+        {/* Bottom-left — Blue */}
         <AnimatedOrb
-          colors={["#F4B183", "#E76F51"]}
+          colors={["#60A5FA", "#6366F1"]}
           size={180}
           initialX={-50}
           initialY={height * 0.75}
@@ -60,7 +73,11 @@ const LoginScreen = () => {
         <BlurView
           intensity={70}
           tint="dark"
-          style={{ position: "absolute", width: "100%", height: "100%" }}
+          style={{
+            position: "absolute",
+            width: "100%",
+            height: "100%",
+          }}
         />
       </View>
       <SafeAreaView className="flex-1 ">

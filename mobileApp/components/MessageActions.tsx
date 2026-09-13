@@ -103,7 +103,7 @@ const MessageActions = ({
             left,
             width: MENU_WIDTH,
           }}
-          className="rounded-3xl bg-[#1C3A47] py-2 shadow-lg elevation-8"
+          className="rounded-3xl bg-surface-overlay py-2 shadow-lg elevation-8"
         >
           {ACTIONS.map((action) => (
             <Pressable

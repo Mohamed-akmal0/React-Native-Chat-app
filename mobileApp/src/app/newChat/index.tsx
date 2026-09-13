@@ -64,7 +64,7 @@ const NewChatScreen = () => {
               className="w-9 h-9 rounded-full items-center justify-center mr-2 bg-surface-card"
               onPress={() => router.back()}
             >
-              <Ionicons name="close" size={20} color="#F4A261" />
+              <Ionicons name="close" size={20} color="#7C6FF7" />
             </Pressable>
 
             <View className="flex-1">

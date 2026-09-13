@@ -71,7 +71,6 @@ export const getAllUsers = async (apiWithAuth: ApiWithAuth) => {
       method: "GET",
       url: users.users,
     });
-    console.log('return data', data)
     return data;
   } catch (error) {
     console.log("err in get users api", error);
@@ -124,7 +123,7 @@ export const editMessage = async (
     });
     return data;
   } catch (error) {
-    console.log("err in get message api", error);
+    console.log("err in edit message api", error);
     throw error;
   }
 };
