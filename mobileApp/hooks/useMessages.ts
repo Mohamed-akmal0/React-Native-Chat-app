@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useApi } from "../lib/axios";
 import { deleteMessage, editMessage, getUserMessages } from "../lib/api";
-import { Message } from "../types";
+import { Message, Chat } from "../types";
 
 export const useMessages = (chatId: string) => {
   const { apiWithAuth } = useApi();
@@ -47,9 +47,40 @@ export const useDeleteMessage = () => {
       deleteMessage(apiWithAuth, deleteArgs),
     onSuccess: (payload) => {
       if (!payload?.chatId || !payload.messageIds?.length) return;
+      const isHard = payload.type === "hard";
       queryClient.setQueryData<Message[]>(
         ["messages", payload.chatId],
-        (old) => old?.filter((m) => !payload.messageIds.includes(m._id)),
+        (old) =>
+          old?.map((m) =>
+            payload.messageIds.includes(m._id)
+              ? {
+                  ...m,
+                  isHardDelete: isHard,
+                  isSoftDelete: !isHard,
+                  ...(isHard ? { cipherText: "", nonce: "" } : {}),
+                }
+              : m,
+          ),
+      );
+      queryClient.setQueryData<Chat[]>(["chats"], (oldChats) =>
+        oldChats?.map((chat) => {
+          if (chat._id !== payload.chatId) return chat;
+          if (
+            !chat.lastMessage ||
+            !payload.messageIds.includes(chat.lastMessage._id)
+          ) {
+            return chat;
+          }
+          return {
+            ...chat,
+            lastMessage: {
+              ...chat.lastMessage,
+              isHardDelete: isHard,
+              isSoftDelete: !isHard,
+              ...(isHard ? { cipherText: "", nonce: "" } : {}),
+            },
+          };
+        }),
       );
       queryClient.invalidateQueries({ queryKey: ["chats"] });
     },

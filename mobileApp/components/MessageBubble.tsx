@@ -33,9 +33,13 @@ function MessageBubble({
   isHardDelete: boolean;
 }) {
   const bubbleRef = useRef<View>(null);
+  const isDeletedForMe = isHardDelete || (isSoftDelete && isFromMe);
+  const deletedCopy = isFromMe
+    ? "You deleted this message"
+    : "This message was deleted";
 
   const handlePress = () => {
-    if (!isFromMe) return;
+    if (!isFromMe || isDeletedForMe) return;
 
     if (isSelectionMode) {
       onToggleSelect(messageId);
@@ -53,7 +57,7 @@ function MessageBubble({
         isSelected ? "bg-white/10" : ""
       }`}
       onLongPress={() => {
-        if (isFromMe) {
+        if (isFromMe && !isDeletedForMe) {
           onLongPress(message, messageId);
         }
       }}
@@ -64,7 +68,13 @@ function MessageBubble({
           <Ionicons
             name={isSelected ? "checkmark-circle" : "ellipse-outline"}
             size={22}
-            color={isSelected ? "#4ADE80" : "#71717A"}
+            color={
+              isDeletedForMe
+                ? "#71717A"
+                : isSelected
+                  ? "#4ADE80"
+                  : "#71717A"
+            }
           />
         </View>
       ) : null}
@@ -85,18 +95,19 @@ function MessageBubble({
         >
           <Text
             className={`text-base leading-5 ${
-              isFromMe ? "text-white" : "text-foreground"
+              isDeletedForMe
+                ? isFromMe
+                  ? "text-white/70 italic"
+                  : "text-subtle-foreground italic"
+                : isFromMe
+                  ? "text-white"
+                  : "text-foreground"
             }`}
           >
-            {isHardDelete
-              ? "You have deleted this message"
-              : !isSoftDelete
-                ? message
-                : null}
-            {message}
+            {isDeletedForMe ? deletedCopy : message}
           </Text>
 
-          {isEditted && (
+          {isEditted && !isDeletedForMe && (
             <Text
               className={`text-[11px] mt-0.5 ${
                 isFromMe ? "text-white/50" : "text-subtle-foreground"

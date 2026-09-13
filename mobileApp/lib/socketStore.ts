@@ -122,6 +122,8 @@ export const useSocketStore = create<socketState>((set, get) => ({
                     ? message.senderId
                     : message.senderId._id,
                 createdAt: message.createdAt,
+                isSoftDelete: message.isSoftDelete,
+                isHardDelete: message.isHardDelete,
               },
               lastMessageAt: message.createdAt,
             };
@@ -168,14 +170,45 @@ export const useSocketStore = create<socketState>((set, get) => ({
       ({
         chatId,
         messageIds,
+        type,
       }: {
         chatId: string;
         messageIds: string[];
         type: "soft" | "hard";
       }) => {
         if (!chatId || !messageIds?.length) return;
+        const isHard = type === "hard";
         queryClient.setQueryData<Message[]>(["messages", chatId], (old) =>
-          old?.filter((m) => !messageIds.includes(m._id)),
+          old?.map((m) =>
+            messageIds.includes(m._id)
+              ? {
+                  ...m,
+                  isHardDelete: isHard,
+                  isSoftDelete: !isHard,
+                  ...(isHard ? { cipherText: "", nonce: "" } : {}),
+                }
+              : m,
+          ),
+        );
+        queryClient.setQueryData<Chat[]>(["chats"], (oldChats) =>
+          oldChats?.map((chat) => {
+            if (chat._id !== chatId) return chat;
+            if (
+              !chat.lastMessage ||
+              !messageIds.includes(chat.lastMessage._id)
+            ) {
+              return chat;
+            }
+            return {
+              ...chat,
+              lastMessage: {
+                ...chat.lastMessage,
+                isHardDelete: isHard,
+                isSoftDelete: !isHard,
+                ...(isHard ? { cipherText: "", nonce: "" } : {}),
+              },
+            };
+          }),
         );
         queryClient.invalidateQueries({ queryKey: ["chats"] });
       },

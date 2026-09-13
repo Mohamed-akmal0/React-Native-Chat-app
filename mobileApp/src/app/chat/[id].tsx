@@ -167,14 +167,16 @@ const ChatDetailScreen = () => {
           ? publicKey
           : (message.senderId?.publicKey ?? publicKey);
 
-      const plaintext =
-        message.plaintext ??
-        decryptMessage(
-          message.cipherText,
-          message.nonce,
-          theirPublicKey,
-          secretKey,
-        );
+      const hidePlaintext = message.isHardDelete || (message.isSoftDelete && isFromMe);
+      const plaintext = hidePlaintext
+        ? ""
+        : (message.plaintext ??
+          decryptMessage(
+            message.cipherText,
+            message.nonce,
+            theirPublicKey,
+            secretKey,
+          ));
 
       return { ...message, isFromMe, plaintext };
     });
@@ -354,6 +356,12 @@ const ChatDetailScreen = () => {
                     (message: any) => message._id === messageId,
                   );
                   if (!selected) return;
+                  if (
+                    selected.isHardDelete ||
+                    (selected.isSoftDelete && selected.isFromMe)
+                  ) {
+                    return;
+                  }
                   startEditing(messageId, selected.plaintext || " ");
                 }}
               >
@@ -471,8 +479,8 @@ const ChatDetailScreen = () => {
                   onPress={handleOnPress}
                   onToggleSelect={toggleMessageSelection}
                   isEditted={item.isEditted}
-                  isSoftDelete={item.isSoftDelete}
-                  isHardDelete={item.isHardDelete}
+                  isSoftDelete={Boolean(item.isSoftDelete)}
+                  isHardDelete={Boolean(item.isHardDelete)}
                 />
               )}
               ItemSeparatorComponent={() => <View style={{ height: 2.5 }} />}
