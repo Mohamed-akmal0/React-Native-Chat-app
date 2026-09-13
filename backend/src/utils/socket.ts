@@ -12,6 +12,8 @@ interface SocketWithUser extends Socket {
 //store online users in memory: userId => set of socketIds
 export const onlineUsers: Map<string, Set<string>> = new Map();
 
+let io: SocketServer | null = null;
+
 export const initializeSocket = (httpServer: httpServer) => {
   const allowedOrigins = [
     "https://localhost:8081",
@@ -19,7 +21,7 @@ export const initializeSocket = (httpServer: httpServer) => {
     process.env.FRONTEND_URL as string,
   ];
 
-  const io = new SocketServer(httpServer, {
+  io = new SocketServer(httpServer, {
     cors: { origin: allowedOrigins },
   });
 
@@ -126,11 +128,11 @@ export const initializeSocket = (httpServer: httpServer) => {
           const payload = message.toJSON();
 
           //emit to chat room for users inside the chat
-          io.to(`chat:${chatId}`).emit("new-message", payload);
+          io?.to(`chat:${chatId}`).emit("new-message", payload);
 
           //emitting the same message to pariticpant message list
           for (const participant of chat.participants) {
-            io.to(`user:${participant.toString()}`).emit("new-message", payload);
+            io?.to(`user:${participant.toString()}`).emit("new-message", payload);
           }
 
         } catch (error) {
@@ -180,3 +182,8 @@ export const initializeSocket = (httpServer: httpServer) => {
   //returning the instance of the socket server
   return io;
 };
+
+export const getSocketIO = () => {
+  if(!io) throw new Error("Socket not initialized");
+  return io
+}

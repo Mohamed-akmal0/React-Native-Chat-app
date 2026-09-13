@@ -7,7 +7,12 @@ export interface IMessage extends Document {
   createdAt: Date;
   updatedAt: Date;
   cipherText: string;
-  nonce: string
+  nonce: string;
+  isEditted: boolean, 
+  // * for sender message delete
+  isSoftDelete: boolean;
+  // * for sender and receiver delete message
+  isHardDelete: boolean
 }
 
 const MessageSchema = new Schema<IMessage>(
@@ -16,7 +21,10 @@ const MessageSchema = new Schema<IMessage>(
     senderId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     // text: { type: String, required: false, trim: true}, // trim is added to remove the extra spaces from the message.
     cipherText: {type: String, required: true},
-    nonce: {type: String, required: true}
+    nonce: {type: String, required: true},
+    isEditted: {type: Boolean, required: true, default: false},
+    isSoftDelete: {type: Boolean, required: true, default: false},
+    isHardDelete: {type: Boolean, required: true, default: false}
   },
   { timestamps: true },
 );
