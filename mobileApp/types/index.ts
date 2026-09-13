@@ -34,6 +34,8 @@ export interface User {
     nonce: string;
     senderId: string;
     createdAt: string;
+    isSoftDelete?: boolean;
+    isHardDelete?: boolean;
   }
   
   export interface Chat {

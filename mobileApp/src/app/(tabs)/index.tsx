@@ -11,6 +11,7 @@ import { ChatItem } from "../../../components/ChatItem";
 import { ChatHeader } from "../../../components/ChatHeader";
 import EmptyUI from "../../../components/EmptyUI";
 import { Chat } from "../../../types";
+import { useCurrentUser } from "../../../hooks/useUsers";
 import { useEffect, useState } from "react";
 import { getPrivateKey } from "../../../lib/encrypt";
 import { useUser } from "@clerk/expo";
@@ -19,7 +20,8 @@ import Loader from "../../../components/Loader";
 const ChatsScreen = () => {
   const router = useRouter();
   const {user} = useUser()
-  const { data: userChatList, isLoading, error } = useGetUserChatList();;
+  const { data: currentUserData } = useCurrentUser();
+  const { data: userChatList, isLoading, error } = useGetUserChatList();
   //state
   const [secretKey, setSecretKey] = useState<string | null>(null);
 
@@ -81,7 +83,8 @@ const ChatsScreen = () => {
           <ChatItem
             chat={item}
             onPress={() => handleChatPress(item)}
-            mySecreteKey={secretKey}
+            mySecreteKey={secretKey ?? undefined}
+            currentUserId={currentUserData?._id ?? undefined}
           />
         )}
         ListHeaderComponent={<ChatHeader />}

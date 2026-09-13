@@ -1,5 +1,5 @@
 import { View, Text, Pressable } from "react-native";
-import { Chat, User } from "../types";
+import { Chat } from "../types";
 import { Image } from "expo-image";
 import { formatDistanceToNow } from "date-fns";
 import { useSocketStore } from "../lib/socketStore";
@@ -9,10 +9,12 @@ export const ChatItem = ({
   chat,
   onPress,
   mySecreteKey,
+  currentUserId,
 }: {
   chat: Chat;
   onPress: () => void;
   mySecreteKey: string | undefined;
+  currentUserId?: string;
 }) => {
   const participant = chat?.otherParticipant;
   const lastMessage = chat?.lastMessage;
@@ -21,11 +23,26 @@ export const ChatItem = ({
 
   const { onlineUsers, typingUsers, unreadChats } = useSocketStore();
 
-  const lastMessageText =
-    lastMessage?.cipherText &&
-    lastMessage?.nonce &&
-    theirPublicKey &&
-    mySecreteKey
+  const lastSenderId =
+    typeof lastMessage?.senderId === "string"
+      ? lastMessage.senderId
+      : lastMessage?.senderId;
+
+  const isLastFromMe = Boolean(
+    currentUserId && lastSenderId && lastSenderId === currentUserId,
+  );
+  const isLastDeletedForMe = Boolean(
+    lastMessage?.isHardDelete || (lastMessage?.isSoftDelete && isLastFromMe),
+  );
+
+  const lastMessageText = isLastDeletedForMe
+    ? lastMessage?.isHardDelete && !isLastFromMe
+      ? "This message was deleted"
+      : "You deleted this message"
+    : lastMessage?.cipherText &&
+        lastMessage?.nonce &&
+        theirPublicKey &&
+        mySecreteKey
       ? decryptMessage(
           lastMessage.cipherText,
           lastMessage.nonce,

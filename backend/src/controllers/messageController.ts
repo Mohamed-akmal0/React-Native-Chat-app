@@ -18,11 +18,7 @@ export const getMessages = async (
     // in message schema, we just add the senderId as mongoose id
     // so we only get the senderId in response
     // so if we give populate, it will follow up a lookup in the ref that we gave in the scheme and fetch the details that we want
-    const messages = await Message.find({
-      chatId,
-      isHardDelete: { $ne: true },
-      $nor: [{ isSoftDelete: true, senderId: userId }],
-    })
+    const messages = await Message.find({ chatId })
       .populate("senderId", "name email avatar publicKey")
       .sort({ createdAt: 1 }); //older messages first!
     res.json(messages);
@@ -129,29 +125,17 @@ export const deleteMessage = async (
 
     const update =
       type === "hard"
-        ? { $set: { isHardDelete: true, isSoftDelete: false } }
+        ? {
+            $set: {
+              isHardDelete: true,
+              isSoftDelete: false,
+              cipherText: "",
+              nonce: "",
+            },
+          }
         : { $set: { isSoftDelete: true } };
 
     await Message.updateMany({ _id: { $in: deletedIds } }, update);
-
-    if (
-      type === "hard" &&
-      chat.lastMessage &&
-      deletedIds.includes(chat.lastMessage.toString())
-    ) {
-      const previous = await Message.findOne({
-        chatId,
-        isHardDelete: { $ne: true },
-        _id: { $nin: deletedIds },
-      }).sort({ createdAt: -1 });
-      if (previous) {
-        chat.lastMessage = previous._id;
-        chat.lastMessageAt = previous.createdAt;
-      } else {
-        chat.set("lastMessage", null);
-      }
-      await chat.save();
-    }
 
     const payload = {
       chatId: chatId.toString(),
