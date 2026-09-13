@@ -8,7 +8,7 @@ export const chats = {
   getOrCreateChats: (participantId: string) => `/chats/with/${participantId}`,
   getMessages: (chatId: string) => `/messages/messages/${chatId}`,
   editMessage: (messageId: string) => `/messages/messages/${messageId}/edit`,
-  deleteMessage: (messageId: string) => `/messages/messages/${messageId}/delete`
+  deleteMessage:  `/messages/messages/delete`
 };
 
 export const users = {

@@ -12,6 +12,8 @@ function MessageBubble({
   isEditted,
   isSelected,
   isSelectionMode,
+  isSoftDelete,
+  isHardDelete,
 }: {
   messageId: string;
   message: string;
@@ -27,6 +29,8 @@ function MessageBubble({
   isEditted: boolean;
   isSelected: boolean;
   isSelectionMode: boolean;
+  isSoftDelete: boolean;
+  isHardDelete: boolean;
 }) {
   const bubbleRef = useRef<View>(null);
 
@@ -45,7 +49,9 @@ function MessageBubble({
 
   return (
     <Pressable
-      className={`flex-row items-center w-full ${isSelected ? "bg-white/10" : ""}`}
+      className={`flex-row items-center w-full ${
+        isSelected ? "bg-white/10" : ""
+      }`}
       onLongPress={() => {
         if (isFromMe) {
           onLongPress(message, messageId);
@@ -58,29 +64,46 @@ function MessageBubble({
           <Ionicons
             name={isSelected ? "checkmark-circle" : "ellipse-outline"}
             size={22}
-            color={isSelected ? "#22C55E" : "#A0A0A5"}
+            color={isSelected ? "#4ADE80" : "#71717A"}
           />
         </View>
       ) : null}
+
       <View
-        className={`flex-1 flex-row ${isFromMe ? "justify-end" : "justify-start"}`}
+        className={`flex-1 flex-row ${
+          isFromMe ? "justify-end" : "justify-start"
+        }`}
       >
         <View
           ref={bubbleRef}
           collapsable={false}
-          className={`max-w-[80%] px-3 py-2 rounded-2xl ${
+          className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl ${
             isFromMe
               ? "bg-primary rounded-br-sm"
-              : "bg-surface-card rounded-bl-sm border border-surface-light"
+              : "bg-surface-card rounded-bl-sm border border-border"
           }`}
         >
           <Text
-            className={`text-sm ${isFromMe ? "text-surface-dark" : "text-foreground"}`}
+            className={`text-base leading-5 ${
+              isFromMe ? "text-white" : "text-foreground"
+            }`}
           >
+            {isHardDelete
+              ? "You have deleted this message"
+              : !isSoftDelete
+                ? message
+                : null}
             {message}
           </Text>
+
           {isEditted && (
-            <Text className="text-[10px] text-foreground ">Editted</Text>
+            <Text
+              className={`text-[11px] mt-0.5 ${
+                isFromMe ? "text-white/50" : "text-subtle-foreground"
+              }`}
+            >
+              Edited
+            </Text>
           )}
         </View>
       </View>

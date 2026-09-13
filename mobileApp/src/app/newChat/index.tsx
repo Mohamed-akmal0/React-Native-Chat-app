@@ -4,7 +4,6 @@ import {
   Pressable,
   TextInput,
   ScrollView,
-  ActivityIndicator,
 } from "react-native";
 import { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -14,6 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { UsersList } from "../../../components/UsersList";
 import { User } from "../../../types";
 import { useGetOrCreateChat } from "../../../hooks/useChat";
+import Loader from "../../../components/Loader";
 
 const NewChatScreen = () => {
   const router = useRouter();
@@ -97,7 +97,7 @@ const NewChatScreen = () => {
           <View className="flex-1 bg-surface">
             {isCreatingChat || isLoading ? (
               <View className="flex-1 items-center justify-center">
-                <ActivityIndicator size="large" color="#F4A261" />
+                <Loader size="large" color="#F4A261"/>
               </View>
             ) : !filteredUsers || filteredUsers.length === 0 ? (
               <View className="flex-1 items-center justify-center px-5">

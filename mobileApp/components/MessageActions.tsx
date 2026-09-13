@@ -20,12 +20,13 @@ interface MessageActionsProps {
   isFromMe: boolean;
   setEditingMessageId: Dispatch<SetStateAction<null | string>>;
   selectedMessageId: string | null;
+  setSelectedIds: Dispatch<SetStateAction<string[]>>;
 }
 
 const ACTIONS = [
-//   { key: "reply", label: "Reply", icon: "arrow-undo-outline" },
+  //   { key: "reply", label: "Reply", icon: "arrow-undo-outline" },
   { key: "copy", label: "Copy", icon: "copy-outline" },
-//   { key: "forward", label: "Forward", icon: "arrow-redo-outline" },
+  //   { key: "forward", label: "Forward", icon: "arrow-redo-outline" },
   { key: "pin", label: "Pin", icon: "pin-outline" },
   { key: "edit", label: "Edit", icon: "pencil-outline" },
   { key: "delete", label: "Delete", icon: "trash-outline" },
@@ -44,7 +45,8 @@ const MessageActions = ({
   setEditMessage,
   selectedMessage,
   setEditingMessageId,
-  selectedMessageId
+  selectedMessageId,
+  setSelectedIds,
 }: MessageActionsProps) => {
   const [menuHeight, setMenuHeight] = useState(320);
 
@@ -78,19 +80,19 @@ const MessageActions = ({
     hide();
     if (key === "edit") {
       setEditMessage(selectedMessage);
-      setEditingMessageId(selectedMessageId)
+      setEditingMessageId(selectedMessageId);
       setIsEditting(true);
     }
-    if (key === "delete") setIsDeleting(true);
+    if (key === "delete") {
+      if (selectedMessageId) {
+        setSelectedIds([selectedMessageId]);
+      }
+      setIsDeleting(true);
+    }
   };
 
   return (
-    <Modal
-      transparent
-      visible
-      animationType="fade"
-      onRequestClose={hide}
-    >
+    <Modal transparent visible animationType="fade" onRequestClose={hide}>
       <View className="flex-1" pointerEvents="box-none">
         <Pressable style={StyleSheet.absoluteFill} onPress={hide} />
         <View
@@ -112,7 +114,9 @@ const MessageActions = ({
               onPress={() => handlePress(action.key)}
             >
               <Ionicons name={action.icon} size={22} color="#FFFFFF" />
-              <Text className="text-white text-[15px] ml-5">{action.label}</Text>
+              <Text className="text-white text-[15px] ml-5">
+                {action.label}
+              </Text>
             </Pressable>
           ))}
         </View>

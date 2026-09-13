@@ -6,6 +6,6 @@ const router = Router();
 
 router.get('/messages/:chatId', protectRoute, getMessages)
 router.patch('/messages/:messageId/edit', protectRoute, editMessage)
-router.patch('/messages/:messageId/delete', protectRoute, deleteMessage)
+router.patch('/messages/delete', protectRoute, deleteMessage)
 
 export default router;

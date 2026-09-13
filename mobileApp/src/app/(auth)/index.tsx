@@ -3,7 +3,6 @@ import {
   Text,
   useWindowDimensions,
   Pressable,
-  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
@@ -12,6 +11,7 @@ import { useSocialAuth } from "../../../hooks/useSocialAuth";
 import { LinearGradient } from "expo-linear-gradient";
 import { AnimatedOrb } from "../../../components/AnimatedOrb";
 import { BlurView } from "expo-blur";
+import Loader from "../../../components/Loader";
 
 const LoginScreen = () => {
   const { width, height } = useWindowDimensions();
@@ -113,7 +113,7 @@ const LoginScreen = () => {
               onPress={() => handleSocialAuth("oauth_google")}
             >
               {loading === "oauth_google" ? (
-                <ActivityIndicator size="small" color="white" />
+                <Loader size="small" color="black" />
               ) : (
                 <Image
                   source={require("../../../assets/images/google-chat.png")}
@@ -131,7 +131,7 @@ const LoginScreen = () => {
               onPress={() => handleSocialAuth("oauth_apple")}
             >
               {loading === "oauth_apple" ? (
-                <ActivityIndicator size="small" color="white" />
+                <Loader size="small" color="white" />
               ) : (
                 <Ionicons name="logo-apple" size={20} color="white" />
               )}

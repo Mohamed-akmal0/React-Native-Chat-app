@@ -1,11 +1,9 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ScrollView,
   Text,
   View,
   Pressable,
-  ActivityIndicator,
   TextInput,
   KeyboardAvoidingView,
   Platform,
@@ -17,7 +15,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { useCurrentUser } from "../../../hooks/useUsers";
-import { useEditMessage, useMessages } from "../../../hooks/useMessages";
+import { useDeleteMessage, useEditMessage, useMessages } from "../../../hooks/useMessages";
 import { useSocketStore } from "../../../lib/socketStore";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
@@ -30,7 +28,9 @@ import {
 } from "../../../lib/encrypt";
 import { useUser } from "@clerk/expo";
 import MessageActions from "../../../components/MessageActions";
-import { FlashList } from "@shopify/flash-list";
+import { FlashList, FlashListRef } from "@shopify/flash-list";
+import DeleteModal from "../../../components/DeleteModal";
+import Loader from "../../../components/Loader";
 
 type ChatDetailsParams = {
   id: string;
@@ -55,8 +55,9 @@ const ChatDetailScreen = () => {
 
   const { data: currentUserData } = useCurrentUser();
   const { data: messageData, isLoading } = useMessages(chatId);
-  const { mutateAsync: editMessageMutation, isPending: isEditingPending } =
+  const { mutateAsync: editMessageMutation } =
     useEditMessage(chatId);
+  const {mutateAsync: deleteMutation} = useDeleteMessage();
 
   const {
     isConnected,
@@ -93,7 +94,7 @@ const ChatDetailScreen = () => {
   const [isEditting, setIsEditting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const flashListRef = useRef<FlashList<any>>(null);
+  const flashListRef = useRef<FlashListRef<any>>(null);
   const isSelectionMode = selectedIds.length > 0;
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
@@ -257,14 +258,6 @@ const ChatDetailScreen = () => {
     );
   };
 
-  const toggleMessageSelection = (messageId: string) => {
-    setSelectedIds((ids) =>
-      ids.includes(messageId)
-        ? ids.filter((id) => id !== messageId)
-        : [...ids, messageId],
-    );
-  };
-
   const handleOnPress = (
     messageId: string,
     message: string,
@@ -285,6 +278,46 @@ const ChatDetailScreen = () => {
     setSelectedIds([]);
     setShowMessageActionsHeader(false);
     setShowMessageAction(false);
+  };
+
+  //for deletion
+  const toggleMessageSelection = (messageId: string) => {
+    setSelectedIds((ids) =>
+      ids.includes(messageId)
+        ? ids.filter((id) => id !== messageId)
+        : [...ids, messageId],
+    );
+  };
+
+  const handleDeleteIconPress = () => {
+    setIsDeleting(true);
+    // setShowHardDeleteModal(true);
+  };
+
+  const handleDelete = async (deleteForEveryone: boolean) => {
+    const deleteType = deleteForEveryone ? "hard" : "soft";
+    const ids =
+      selectedIds.length > 0
+        ? selectedIds
+        : selectedMessageId
+          ? [selectedMessageId]
+          : [];
+    if (!ids.length) return;
+    try {
+      await deleteMutation({
+        messageIds: ids,
+        typeOfDelete: deleteType,
+      });
+      setIsDeleting(false);
+      setSelectedIds([]);
+      setShowMessageActionsHeader(false);
+    } catch (error) {
+      console.log("err in handle delete", error);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleting(false);
   };
 
   return (
@@ -336,7 +369,7 @@ const ChatDetailScreen = () => {
             </Pressable> */}
             <Pressable
               className="active:opacity-70"
-              onPress={() => setIsDeleting(true)}
+              onPress={handleDeleteIconPress}
             >
               <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
             </Pressable>
@@ -380,6 +413,14 @@ const ChatDetailScreen = () => {
         </View>
       )}
 
+      <DeleteModal
+        visible={isDeleting}
+        count={selectedIds.length > 0 ? selectedIds?.length : 1}
+        onCancel={handleDeleteCancel}
+        onDelete={handleDelete}
+        participantName={name}
+      />
+
       {showMessageAction && actionAnchor && selectedMessage && (
         <MessageActions
           setIsDeleting={setIsDeleting}
@@ -391,6 +432,7 @@ const ChatDetailScreen = () => {
           selectedMessage={selectedMessage}
           setEditingMessageId={setEditingMessageId}
           selectedMessageId={selectedMessageId}
+          setSelectedIds={setSelectedIds}
         />
       )}
 
@@ -404,7 +446,7 @@ const ChatDetailScreen = () => {
         <View className="flex-1 bg-surface">
           {isLoading ? (
             <View className="flex-1 items-center justify-center">
-              <ActivityIndicator size="large" color="#F4A261" />
+              <Loader size="large" color="#F4A261" />
             </View>
           ) : !messageData || messageData?.length === 0 ? (
             <EmptyUI
@@ -429,9 +471,11 @@ const ChatDetailScreen = () => {
                   onPress={handleOnPress}
                   onToggleSelect={toggleMessageSelection}
                   isEditted={item.isEditted}
+                  isSoftDelete={item.isSoftDelete}
+                  isHardDelete={item.isHardDelete}
                 />
               )}
-              ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+              ItemSeparatorComponent={() => <View style={{ height: 2.5 }} />}
               contentContainerStyle={{
                 paddingHorizontal: 16,
                 paddingVertical: 12,
@@ -461,7 +505,6 @@ const ChatDetailScreen = () => {
 
               <TextInput
                 placeholder="Type a message"
-                // placeholderTextColor="#6B6B70"
                 placeholderTextColor="#7C6FF7"
                 className="flex-1 text-foreground text-sm mb-2"
                 multiline
@@ -481,7 +524,7 @@ const ChatDetailScreen = () => {
                 }
               >
                 {isSending ? (
-                  <ActivityIndicator size="small" color="#0D0D0F" />
+                  <Loader size="small" color="#0D0D0F" />
                 ) : (
                   <Ionicons name="send" size={18} color="#0D0D0F" />
                 )}

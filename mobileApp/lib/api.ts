@@ -14,7 +14,7 @@ export const loginApi = async (apiWithAuth: ApiWithAuth, publicKey: string) => {
     const { data } = await apiWithAuth({
       method: "POST",
       url: authUrls.login,
-      data: {publicKey}
+      data: { publicKey },
     });
     return data;
   } catch (error) {
@@ -109,10 +109,10 @@ export const getUserMessages = async (
 
 export const editMessage = async (
   apiWithAuth: ApiWithAuth,
-  editMessageArgs :{messageId:string, cipherText:string, nonce:string},
+  editMessageArgs: { messageId: string; cipherText: string; nonce: string },
 ) => {
   try {
-    const {messageId, cipherText, nonce} = editMessageArgs
+    const { messageId, cipherText, nonce } = editMessageArgs;
     const { data } = await apiWithAuth({
       method: "PATCH",
       url: chats.editMessage(messageId),
@@ -124,6 +124,31 @@ export const editMessage = async (
     return data;
   } catch (error) {
     console.log("err in edit message api", error);
+    throw error;
+  }
+};
+
+export const deleteMessage = async (
+  apiWithAuth: ApiWithAuth,
+  deleteArgs: { messageIds: string[]; typeOfDelete: string },
+) => {
+  try {
+    const { messageIds, typeOfDelete } = deleteArgs;
+    const { data } = await apiWithAuth<{
+      chatId: string;
+      messageIds: string[];
+      type: "soft" | "hard";
+    }>({
+      method: "PATCH",
+      url: chats.deleteMessage,
+      data: {
+        messageIds,
+        type: typeOfDelete,
+      },
+    });
+    return data;
+  } catch (error) {
+    console.log("err in delete message", error);
     throw error;
   }
 };
