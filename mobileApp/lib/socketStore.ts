@@ -155,6 +155,32 @@ export const useSocketStore = create<socketState>((set, get) => ({
       });
     });
 
+    socket.on("message-editted", (message: Message) => {
+      const chatId = String(message.chatId ?? "");
+      queryClient.setQueryData<Message[]>(["messages", chatId], (old) =>
+        old?.map((m) => (m._id === message._id ? { ...m, ...message } : m)),
+      );
+      // if this is lastMessage, update ["chats"] cipherText/nonce too
+    });
+
+    socket.on(
+      "message-deleted",
+      ({
+        chatId,
+        messageIds,
+      }: {
+        chatId: string;
+        messageIds: string[];
+        type: "soft" | "hard";
+      }) => {
+        if (!chatId || !messageIds?.length) return;
+        queryClient.setQueryData<Message[]>(["messages", chatId], (old) =>
+          old?.filter((m) => !messageIds.includes(m._id)),
+        );
+        queryClient.invalidateQueries({ queryKey: ["chats"] });
+      },
+    );
+
     socket.on(
       "typing",
       ({
@@ -233,6 +259,7 @@ export const useSocketStore = create<socketState>((set, get) => ({
       nonce: encrypted.nonce,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      isEditted: false,
     };
 
     //update the UI with temp message immediatly

@@ -14,7 +14,7 @@ export const loginApi = async (apiWithAuth: ApiWithAuth, publicKey: string) => {
     const { data } = await apiWithAuth({
       method: "POST",
       url: authUrls.login,
-      data: {publicKey}
+      data: { publicKey },
     });
     return data;
   } catch (error) {
@@ -71,7 +71,6 @@ export const getAllUsers = async (apiWithAuth: ApiWithAuth) => {
       method: "GET",
       url: users.users,
     });
-    console.log('return data', data)
     return data;
   } catch (error) {
     console.log("err in get users api", error);
@@ -104,6 +103,52 @@ export const getUserMessages = async (
     return data;
   } catch (error) {
     console.log("err in get message api", error);
+    throw error;
+  }
+};
+
+export const editMessage = async (
+  apiWithAuth: ApiWithAuth,
+  editMessageArgs: { messageId: string; cipherText: string; nonce: string },
+) => {
+  try {
+    const { messageId, cipherText, nonce } = editMessageArgs;
+    const { data } = await apiWithAuth({
+      method: "PATCH",
+      url: chats.editMessage(messageId),
+      data: {
+        cipherText,
+        nonce,
+      },
+    });
+    return data;
+  } catch (error) {
+    console.log("err in edit message api", error);
+    throw error;
+  }
+};
+
+export const deleteMessage = async (
+  apiWithAuth: ApiWithAuth,
+  deleteArgs: { messageIds: string[]; typeOfDelete: string },
+) => {
+  try {
+    const { messageIds, typeOfDelete } = deleteArgs;
+    const { data } = await apiWithAuth<{
+      chatId: string;
+      messageIds: string[];
+      type: "soft" | "hard";
+    }>({
+      method: "PATCH",
+      url: chats.deleteMessage,
+      data: {
+        messageIds,
+        type: typeOfDelete,
+      },
+    });
+    return data;
+  } catch (error) {
+    console.log("err in delete message", error);
     throw error;
   }
 };

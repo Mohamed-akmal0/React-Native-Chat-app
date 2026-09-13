@@ -1,22 +1,113 @@
-import { Message } from "../types";
-import { View, Text } from "react-native";
+import { useRef } from "react";
+import { View, Text, Pressable, LayoutRectangle } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
-// function MessageBubble({ message, isFromMe }: { message: Message; isFromMe: boolean }) {
-function MessageBubble({ message, isFromMe }: { message: string; isFromMe: boolean }) {
+function MessageBubble({
+  messageId,
+  message,
+  isFromMe,
+  onLongPress,
+  onPress,
+  onToggleSelect,
+  isEditted,
+  isSelected,
+  isSelectionMode,
+  isSoftDelete,
+  isHardDelete,
+}: {
+  messageId: string;
+  message: string;
+  isFromMe: boolean;
+  onLongPress: (message: string, messageId: string) => void;
+  onPress: (
+    messageId: string,
+    message: string,
+    anchor: LayoutRectangle,
+    isFromMe: boolean,
+  ) => void;
+  onToggleSelect: (messageId: string) => void;
+  isEditted: boolean;
+  isSelected: boolean;
+  isSelectionMode: boolean;
+  isSoftDelete: boolean;
+  isHardDelete: boolean;
+}) {
+  const bubbleRef = useRef<View>(null);
+
+  const handlePress = () => {
+    if (!isFromMe) return;
+
+    if (isSelectionMode) {
+      onToggleSelect(messageId);
+      return;
+    }
+
+    bubbleRef.current?.measureInWindow((x, y, width, height) => {
+      onPress(messageId, message, { x, y, width, height }, isFromMe);
+    });
+  };
+
   return (
-    <View className={`flex-row ${isFromMe ? "justify-end" : "justify-start"}`}>
+    <Pressable
+      className={`flex-row items-center w-full ${
+        isSelected ? "bg-white/10" : ""
+      }`}
+      onLongPress={() => {
+        if (isFromMe) {
+          onLongPress(message, messageId);
+        }
+      }}
+      onPress={handlePress}
+    >
+      {isSelectionMode ? (
+        <View className="w-7 items-center mr-2">
+          <Ionicons
+            name={isSelected ? "checkmark-circle" : "ellipse-outline"}
+            size={22}
+            color={isSelected ? "#4ADE80" : "#71717A"}
+          />
+        </View>
+      ) : null}
+
       <View
-        className={`max-w-[80%] px-3 py-2 rounded-2xl ${
-          isFromMe
-            ? "bg-primary rounded-br-sm"
-            : "bg-surface-card rounded-bl-sm border border-surface-light"
+        className={`flex-1 flex-row ${
+          isFromMe ? "justify-end" : "justify-start"
         }`}
       >
-        <Text className={`text-sm ${isFromMe ? "text-surface-dark" : "text-foreground"}`}>
-          {message}
-        </Text>
+        <View
+          ref={bubbleRef}
+          collapsable={false}
+          className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl ${
+            isFromMe
+              ? "bg-primary rounded-br-sm"
+              : "bg-surface-card rounded-bl-sm border border-border"
+          }`}
+        >
+          <Text
+            className={`text-base leading-5 ${
+              isFromMe ? "text-white" : "text-foreground"
+            }`}
+          >
+            {isHardDelete
+              ? "You have deleted this message"
+              : !isSoftDelete
+                ? message
+                : null}
+            {message}
+          </Text>
+
+          {isEditted && (
+            <Text
+              className={`text-[11px] mt-0.5 ${
+                isFromMe ? "text-white/50" : "text-subtle-foreground"
+              }`}
+            >
+              Edited
+            </Text>
+          )}
+        </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 

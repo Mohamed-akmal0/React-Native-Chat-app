@@ -1,6 +1,5 @@
 import {
   Text,
-  ActivityIndicator,
   View,
   FlatList,
   Pressable,
@@ -12,10 +11,10 @@ import { ChatItem } from "../../../components/ChatItem";
 import { ChatHeader } from "../../../components/ChatHeader";
 import EmptyUI from "../../../components/EmptyUI";
 import { Chat } from "../../../types";
-import { useCurrentUser } from "../../../hooks/useUsers";
 import { useEffect, useState } from "react";
 import { getPrivateKey } from "../../../lib/encrypt";
 import { useUser } from "@clerk/expo";
+import Loader from "../../../components/Loader";
 
 const ChatsScreen = () => {
   const router = useRouter();
@@ -47,7 +46,7 @@ const ChatsScreen = () => {
   if (isLoading) {
     return (
       <View className="flex-1 bg-surface items-center justify-center">
-        <ActivityIndicator size={"large"} color={"#f4A261"} />
+        <Loader size="large" color="#F4A261" />
       </View>
     );
   }

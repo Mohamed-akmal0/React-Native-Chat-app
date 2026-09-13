@@ -23,6 +23,9 @@ export interface User {
     nonce: string | any;
     createdAt: string;
     updatedAt: string;
+    isEditted: boolean;
+    isSoftDelete?: boolean;
+    isHardDelete?: boolean;
   }
   
   export interface ChatLastMessage {
