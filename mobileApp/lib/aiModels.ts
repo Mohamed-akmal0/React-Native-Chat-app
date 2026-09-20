@@ -42,15 +42,22 @@ export const AI_MODEL_GROUPS: AiModelGroup[] = [
     label: "Gemini",
     models: [
       {
-        id: "gemini-2.5-flash",
-        label: "Gemini 2.5 Flash",
+        id: "gemini-3.6-flash",
+        label: "Gemini 3.6 Flash",
         hint: "Fast",
         provider: "gemini",
         apiProvider: "gemini",
       },
       {
-        id: "gemini-2.5-pro",
-        label: "Gemini 2.5 Pro",
+        id: "gemini-3.7-flash",
+        label: "Gemini 3.7 Flash",
+        hint: "Latest · fast",
+        provider: "gemini",
+        apiProvider: "gemini",
+      },
+      {
+        id: "gemini-3-pro",
+        label: "Gemini 3 Pro",
         hint: "Advanced reasoning",
         provider: "gemini",
         apiProvider: "gemini",
