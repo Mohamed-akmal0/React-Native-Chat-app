@@ -57,11 +57,14 @@ const fmtTime = (n: number) =>
 // so `data` is a string of `data: {...}\n\n` frames — we join their `text`
 // fields into a single reply. If it's already a plain string or an object,
 // we handle those shapes too.
+// When the backend writes an error frame (`{error: "..."}`) we throw so the
+// caller can surface it in a danger bubble.
 const parseAiResponse = (data: unknown): string => {
   if (data == null) return "";
 
   if (typeof data === "object") {
-    const obj = data as { text?: unknown; reply?: unknown; message?: unknown };
+    const obj = data as Record<string, unknown>;
+    if (typeof obj.error === "string") throw new Error(obj.error);
     if (typeof obj.text === "string") return obj.text;
     if (typeof obj.reply === "string") return obj.reply;
     if (typeof obj.message === "string") return obj.message;
@@ -84,8 +87,10 @@ const parseAiResponse = (data: unknown): string => {
     try {
       const parsed = JSON.parse(payload);
       if (parsed?.isDone) continue;
+      if (typeof parsed?.error === "string") throw new Error(parsed.error);
       if (typeof parsed?.text === "string") out += parsed.text;
-    } catch {
+    } catch (e) {
+      if (e instanceof Error && e.message) throw e;
       out += payload;
     }
   }
@@ -243,16 +248,33 @@ const Chatbot = () => {
       },
       {
         onSuccess: (data) => {
-          const reply = parseAiResponse(data).trim() || "…";
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: `b-${Date.now()}`,
-              role: "bot",
-              text: reply,
-              ts: Date.now(),
-            },
-          ]);
+          try {
+            const reply = parseAiResponse(data).trim() || "…";
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: `b-${Date.now()}`,
+                role: "bot",
+                text: reply,
+                ts: Date.now(),
+              },
+            ]);
+          } catch (e) {
+            const errorMsg =
+              e instanceof Error && e.message
+                ? e.message
+                : "Something went wrong. Please try again.";
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: `err-${Date.now()}`,
+                role: "bot",
+                text: errorMsg,
+                ts: Date.now(),
+                isError: true,
+              },
+            ]);
+          }
         },
         onError: () => {
           setMessages((prev) => [
