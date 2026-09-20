@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { getPrivateKey } from "../../../lib/encrypt";
 import { useUser } from "@clerk/expo";
 import Loader from "../../../components/Loader";
+import { FlashList } from "@shopify/flash-list";
 
 const ChatsScreen = () => {
   const router = useRouter();
@@ -76,7 +77,7 @@ const ChatsScreen = () => {
         <Text className="text-white">ChatsScreen</Text>
         <Button title='Try!' onPress={ () => { Sentry.captureException(new Error('First error')) }}/>
       </ScrollView> */}
-      <FlatList
+      <FlashList
         data={userChatList}
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
