@@ -97,7 +97,7 @@ const NewChatScreen = () => {
           <View className="flex-1 bg-surface">
             {isCreatingChat || isLoading ? (
               <View className="flex-1 items-center justify-center">
-                <Loader size="large" color="#F4A261"/>
+                <Loader size="large" color="#7C6FF7"/>
               </View>
             ) : !filteredUsers || filteredUsers.length === 0 ? (
               <View className="flex-1 items-center justify-center px-5">

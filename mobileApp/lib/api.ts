@@ -152,3 +152,31 @@ export const deleteMessage = async (
     throw error;
   }
 };
+
+export const getAiChatReplies = async (
+  apiWithAuth: ApiWithAuth,
+  aiChatArgs: {
+    message: string;
+    model: string;
+    provider: string;
+    history: string[];
+  },
+) => {
+  try {
+    const { message, provider, history, model } = aiChatArgs;
+    const { data } = await apiWithAuth({
+      method: "POST",
+      url: chats.aiChatBot,
+      data: {
+        message: message,
+        provider: provider,
+        history: history,
+        model: model,
+      },
+    });
+    return data;
+  } catch (error) {
+    console.log("err in get ai chat replies", error);
+    throw error;
+  }
+};

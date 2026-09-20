@@ -4,7 +4,7 @@ import { useAuth } from "@clerk/expo";
 
 const TabsLayout = () => {
   const { isSignedIn, isLoaded } = useAuth();
-  if(!isLoaded) return null;
+  if (!isLoaded) return null;
   if (!isSignedIn) return <Redirect href="/(auth)" />;
   return (
     <Tabs
@@ -31,6 +31,19 @@ const TabsLayout = () => {
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
               name={focused ? "chatbubbles" : "chatbubbles-outline"}
+              color={color}
+              size={size}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="chatbot"
+        options={{
+          title: "ChatBot",
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? "sparkles" : "sparkles-outline"}
               color={color}
               size={size}
             />

@@ -63,6 +63,9 @@ const api_Url = "https://nexora-00xrp.sevalla.app/api/v1";
 const api = axios.create({
   baseURL: api_Url,
   headers: { "Content-Type": "application/json" },
+  // Cap the wait so an unresponsive server (or unknown provider slipping through) can't freeze the UI.
+  // AI streams complete in a few seconds; 90s is a generous ceiling.
+  timeout: 90_000,
 });
 
 // Response interceptor registered once
